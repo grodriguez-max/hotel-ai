@@ -1,0 +1,3235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HotelClaw — Panel de Administración</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --navy:   #1C1C2E;
+      --gold:   #C9A96E;
+      --gold2:  #a8874e;
+      --cream:  #F7F5F0;
+      --white:  #FFFFFF;
+      --text:   #2D2D2D;
+      --muted:  #6B7280;
+      --border: #E5E2DA;
+      --ok:     #10B981;
+      --err:    #EF4444;
+      --warn:   #F59E0B;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--text); margin: 0; }
+    h1,h2,h3 { font-family: 'Playfair Display', serif; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      position: fixed; top: 0; left: 0; width: 260px; height: 100vh;
+      background: var(--navy); display: flex; flex-direction: column;
+      z-index: 100; overflow-y: auto;
+    }
+    .logo-area { padding: 28px 24px 20px; border-bottom: 1px solid rgba(201,169,110,.2); }
+    .logo-area .brand { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--gold); font-weight: 700; }
+    .logo-area .sub   { font-size: .72rem; color: rgba(255,255,255,.45); letter-spacing: .08em; text-transform: uppercase; margin-top: 2px; }
+
+    nav { padding: 16px 12px; flex: 1; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px; border-radius: 10px; cursor: pointer;
+      color: rgba(255,255,255,.65); font-size: .875rem; font-weight: 500;
+      transition: all .18s; margin-bottom: 2px; user-select: none;
+    }
+    .nav-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+    .nav-item.active { background: rgba(201,169,110,.18); color: var(--gold); }
+    .nav-item .icon { font-size: 1.1rem; width: 22px; text-align: center; flex-shrink: 0; }
+    .nav-badge {
+      margin-left: auto; background: var(--gold); color: var(--navy);
+      font-size: .65rem; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+    }
+
+    .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,.07); }
+    .sidebar-footer .version { font-size: .7rem; color: rgba(255,255,255,.3); }
+
+    /* ── Main ── */
+    #main { margin-left: 260px; min-height: 100vh; }
+    .topbar {
+      background: var(--white); border-bottom: 1px solid var(--border);
+      padding: 16px 32px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-title { font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 600; }
+    .topbar-sub { font-size: .78rem; color: var(--muted); margin-top: 1px; }
+    .content { padding: 32px; max-width: 1100px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--white); border-radius: 14px;
+      border: 1px solid var(--border); padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+    .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    /* ── Status chips ── */
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 20px; font-size: .78rem; font-weight: 600;
+    }
+    .chip-ok   { background: #D1FAE5; color: #065F46; }
+    .chip-err  { background: #FEE2E2; color: #991B1B; }
+    .chip-warn { background: #FEF3C7; color: #92400E; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; }
+    .dot-ok   { background: var(--ok); box-shadow: 0 0 0 3px rgba(16,185,129,.2); }
+    .dot-err  { background: var(--err); }
+    .dot-warn { background: var(--warn); }
+
+    /* ── Stat cards ── */
+    .stat-card {
+      background: var(--white); border-radius: 14px; border: 1px solid var(--border);
+      padding: 20px 22px; display: flex; align-items: flex-start; gap: 16px;
+    }
+    .stat-icon { font-size: 1.8rem; line-height: 1; }
+    .stat-label { font-size: .75rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
+    .stat-value { font-size: 1.05rem; font-weight: 700; margin-top: 2px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 20px; border-radius: 9px; font-size: .875rem; font-weight: 600;
+      cursor: pointer; border: none; transition: all .15s; text-decoration: none;
+    }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-primary { background: var(--navy); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #2a2a42; }
+    .btn-gold { background: var(--gold); color: var(--navy); }
+    .btn-gold:hover:not(:disabled) { background: var(--gold2); }
+    .btn-outline { background: transparent; color: var(--navy); border: 1.5px solid var(--border); }
+    .btn-outline:hover:not(:disabled) { border-color: var(--navy); }
+    .btn-danger { background: #FEE2E2; color: var(--err); border: 1px solid #FECACA; }
+    .btn-danger:hover:not(:disabled) { background: #FECACA; }
+    .btn-sm { padding: 7px 14px; font-size: .8rem; }
+
+    /* ── Forms ── */
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; font-size: .8rem; font-weight: 600; color: var(--text); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+    .form-hint  { font-size: .74rem; color: var(--muted); margin-top: 4px; }
+    .form-input {
+      width: 100%; padding: 10px 14px; border-radius: 9px; font-size: .875rem;
+      border: 1.5px solid var(--border); background: var(--white); color: var(--text);
+      font-family: 'Inter', sans-serif; transition: border .15s;
+      outline: none;
+    }
+    .form-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,169,110,.15); }
+    .form-section { padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+    .form-section:last-child { border-bottom: none; }
+    .form-section-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: var(--navy); }
+
+    /* ── Log viewer ── */
+    .log-box {
+      background: #0D1117; color: #c9d1d9; border-radius: 10px;
+      padding: 16px; font-family: 'Courier New', monospace; font-size: .78rem;
+      height: 320px; overflow-y: auto; line-height: 1.6;
+    }
+    .log-line { margin: 0; white-space: pre-wrap; word-break: break-all; }
+    .log-line.ok   { color: #56d364; }
+    .log-line.err  { color: #f85149; }
+    .log-line.warn { color: #e3b341; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      padding: 13px 20px; border-radius: 12px; font-size: .875rem; font-weight: 600;
+      box-shadow: 0 8px 30px rgba(0,0,0,.18); transform: translateY(80px);
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+      opacity: 0; pointer-events: none; max-width: 360px;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.ok   { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+    #toast.err  { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+
+    /* ── Separator ── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+    /* ── Step indicator ── */
+    .step-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 50%; background: var(--navy);
+      color: var(--gold); font-size: .8rem; font-weight: 700; flex-shrink: 0;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 10px; }
+
+    /* ── Login overlay ── */
+    #login-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9000;
+      background: linear-gradient(135deg, #1C1C2E 0%, #0f0f20 100%);
+      align-items: center; justify-content: center;
+    }
+    #login-overlay.visible { display: flex; }
+    .login-box {
+      background: #fff; border-radius: 20px; padding: 48px 44px;
+      width: 400px; max-width: 92vw; text-align: center;
+      box-shadow: 0 24px 80px rgba(0,0,0,.4);
+    }
+    .login-logo  { font-size: 52px; margin-bottom: 6px; }
+    .login-brand { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #1C1C2E; font-weight: 700; }
+    .login-sub   { font-size: .8rem; color: #9CA3AF; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 32px; margin-top: 4px; }
+    .login-box input {
+      width: 100%; padding: 12px 16px; border-radius: 10px; border: 1.5px solid #E5E2DA;
+      font-size: .9rem; font-family: 'Inter', sans-serif; margin-bottom: 12px; outline: none;
+      color: #2D2D2D; background: #FAFAF9; transition: border .15s;
+    }
+    .login-box input:focus { border-color: #C9A96E; box-shadow: 0 0 0 3px rgba(201,169,110,.15); }
+    .btn-login {
+      width: 100%; padding: 13px; border-radius: 10px; border: none;
+      background: #1C1C2E; color: #C9A96E; font-size: .95rem; font-weight: 700;
+      cursor: pointer; transition: background .2s; margin-top: 4px;
+      font-family: 'Inter', sans-serif; letter-spacing: .03em;
+    }
+    .btn-login:hover { background: #2a2a42; }
+    .login-err { color: #EF4444; font-size: .8rem; margin-top: 10px; min-height: 20px; }
+
+    /* ── Hotel context in topbar ── */
+    #hotel-ctx { display: flex; align-items: center; gap: 12px; }
+    #hotel-ctx-name { font-size: .8rem; color: #6B7280; font-weight: 500; }
+    #btn-logout { padding: 6px 14px; border-radius: 8px; border: 1px solid #E5E2DA; background: transparent; color: #6B7280; font-size: .78rem; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s; }
+    #btn-logout:hover { background: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">🛎️</div>
+    <div class="login-brand">HotelClaw</div>
+    <div class="login-sub">Panel de Administración</div>
+    <input id="login-email" type="email" placeholder="Email del hotel" autocomplete="email">
+    <input id="login-pass" type="password" placeholder="Contraseña" autocomplete="current-password"
+           onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn-login" onclick="doLogin()">Ingresar</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside id="sidebar">
+  <div class="logo-area">
+    <div class="brand">🛎️ HotelClaw</div>
+    <div class="sub">Panel de Administración</div>
+  </div>
+
+  <nav>
+    <div class="nav-item active" onclick="goto('dashboard')">
+      <span class="icon">🏠</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="goto('hotel')">
+      <span class="icon">🏨</span> Mi Hotel
+    </div>
+    <div class="nav-item" onclick="goto('credenciales')">
+      <span class="icon">🔑</span> Credenciales
+    </div>
+    <div class="nav-item" onclick="goto('canales')">
+      <span class="icon">📡</span> Canales
+    </div>
+    <div class="nav-item" onclick="goto('gateway')">
+      <span class="icon">⚙️</span> Gateway
+    </div>
+    <div class="nav-item" id="nav-pairing" onclick="goto('pairing')">
+      <span class="icon">🔗</span> Pareamiento
+    </div>
+    <div class="nav-item" onclick="goto('email')">
+      <span class="icon">📧</span> Email & Outreach
+    </div>
+    <div class="nav-item" onclick="goto('kb')">
+      <span class="icon">📚</span> Knowledge Base
+    </div>
+    <div class="nav-item" onclick="goto('servicios')">
+      <span class="icon">🏨</span> Servicios
+    </div>
+    <div class="nav-item" onclick="goto('tickets')">
+      <span class="icon">🎫</span> Tickets
+    </div>
+    <div class="nav-item" onclick="goto('huespedes')">
+      <span class="icon">👥</span> Huéspedes
+    </div>
+    <div class="nav-item" onclick="goto('menu')">
+      <span class="icon">🍽️</span> Menú Digital
+    </div>
+    <div class="nav-item" onclick="goto('rooms')">
+      <span class="icon">🏨</span> Habitaciones
+    </div>
+    <div class="nav-item" id="nav-chat" onclick="goto('chat')">
+      <span class="icon">💬</span> Chat Web
+      <span class="nav-badge" id="chat-unread-badge" style="display:none">0</span>
+    </div>
+    <div class="nav-item" onclick="goto('analytics')">
+      <span class="icon">📊</span> Analytics
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div class="dot dot-err" id="sidebar-dot"></div>
+      <span style="color:rgba(255,255,255,.5);font-size:.75rem" id="sidebar-status-text">Verificando...</span>
+    </div>
+    <div class="version">HotelClaw v1.0 · OpenClaw 2026.2</div>
+  </div>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div id="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-sub" id="topbar-sub">Resumen general de HotelClaw</div>
+    </div>
+    <div id="hotel-ctx">
+      <span id="hotel-ctx-name"></span>
+      <button class="btn btn-outline btn-sm" onclick="refreshStatus()">↻ Actualizar</button>
+      <button id="btn-logout" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════════ DASHBOARD ══════════ -->
+    <div id="sec-dashboard" class="section active">
+
+      <!-- Status cards -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px">
+        <div class="stat-card">
+          <div class="stat-icon">⚙️</div>
+          <div>
+            <div class="stat-label">Gateway</div>
+            <div class="stat-value" id="ds-gateway">—</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✈️</div>
+          <div>
+            <div class="stat-label">Telegram</div>
+            <div class="stat-value" id="ds-telegram">—</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💬</div>
+          <div>
+            <div class="stat-label">WhatsApp</div>
+            <div class="stat-value" id="ds-whatsapp">—</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🧠</div>
+          <div>
+            <div class="stat-label">Skills activas</div>
+            <div class="stat-value" id="ds-skills">6</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-title">⚡ Acciones rápidas</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <button class="btn btn-gold" onclick="startGateway()">▶ Iniciar Aria</button>
+          <button class="btn btn-danger btn-sm" onclick="stopGateway()">⏹ Detener</button>
+          <button class="btn btn-outline btn-sm" onclick="goto('hotel')">🏨 Configurar mi hotel</button>
+          <button class="btn btn-outline btn-sm" onclick="goto('pairing')">🔗 Aprobar acceso Telegram</button>
+          <button class="btn btn-outline btn-sm" onclick="goto('canales')">📡 Ver canales</button>
+        </div>
+      </div>
+
+      <!-- Welcome card if hotel not configured -->
+      <div class="card" id="welcome-card" style="background:linear-gradient(135deg,#1C1C2E,#2d2d4e);color:#fff;margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="font-size:2.5rem">🛎️</div>
+          <div>
+            <h2 style="color:var(--gold);margin:0 0 4px;font-size:1.2rem">Bienvenido a HotelClaw</h2>
+            <p style="margin:0;color:rgba(255,255,255,.7);font-size:.875rem">Para empezar, configura los datos de tu hotel y asegúrate de que el gateway esté activo.</p>
+            <div style="display:flex;gap:10px;margin-top:14px">
+              <button class="btn btn-gold btn-sm" onclick="goto('hotel')">Configurar mi hotel →</button>
+              <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff" onclick="goto('credenciales')">Agregar credenciales →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Raw status output -->
+      <div class="card">
+        <div class="card-title">📋 Estado detallado de canales</div>
+        <div class="log-box" id="ds-raw-status" style="height:180px">Cargando estado...</div>
+      </div>
+    </div>
+
+    <!-- ══════════ MI HOTEL ══════════ -->
+    <div id="sec-hotel" class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+          <div>
+            <h2 style="margin:0;font-size:1.3rem">Datos de mi hotel</h2>
+            <p style="margin:4px 0 0;font-size:.82rem;color:var(--muted)">Esta información es la que Aria usará para responder a tus huéspedes automáticamente.</p>
+          </div>
+          <button class="btn btn-gold" onclick="saveHotel()">💾 Guardar cambios</button>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">📍 Información general</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="form-group" style="grid-column:1/-1">
+              <label class="form-label">Nombre del hotel *</label>
+              <input class="form-input" id="h-nombre" placeholder="Ej: Hotel Casa del Mar" />
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label class="form-label">Dirección completa</label>
+              <input class="form-input" id="h-direccion" placeholder="Ej: Calle Principal 45, Cartagena, Colombia" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Teléfono</label>
+              <input class="form-input" id="h-telefono" placeholder="+57 5 123 4567" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">WhatsApp del hotel</label>
+              <input class="form-input" id="h-whatsapp" placeholder="+57 300 123 4567" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email de contacto</label>
+              <input class="form-input" id="h-email" placeholder="info@mihotel.com" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sitio web</label>
+              <input class="form-input" id="h-web" placeholder="www.mihotel.com" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">🕐 Horarios</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="form-group">
+              <label class="form-label">Check-in</label>
+              <input class="form-input" id="h-checkin" placeholder="3:00 PM" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Check-out</label>
+              <input class="form-input" id="h-checkout" placeholder="12:00 PM" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Early check-in</label>
+              <input class="form-input" id="h-early_checkin" placeholder="Disponible, $30 USD adicionales" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Late check-out</label>
+              <input class="form-input" id="h-late_checkout" placeholder="Disponible, $30 USD adicionales" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Recepción 24h</label>
+              <select class="form-input" id="h-recepcion_24h">
+                <option>Sí</option>
+                <option>No</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">🍳 Desayuno</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="form-group">
+              <label class="form-label">¿Incluido en la tarifa?</label>
+              <select class="form-input" id="h-desayuno_incluido">
+                <option>Sí</option>
+                <option>No</option>
+                <option>Depende del plan</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Horario</label>
+              <input class="form-input" id="h-desayuno_horario" placeholder="7:00 AM – 10:30 AM" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tipo</label>
+              <input class="form-input" id="h-desayuno_tipo" placeholder="Buffet / Continental / A la carta" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">📶 WiFi</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="form-group">
+              <label class="form-label">Nombre de la red (SSID)</label>
+              <input class="form-input" id="h-wifi_ssid" placeholder="HotelCasaDelMar_Guest" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Contraseña</label>
+              <input class="form-input" id="h-wifi_pass" placeholder="bienvenido2026" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">🅿️ Instalaciones y políticas</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="form-group">
+              <label class="form-label">Estacionamiento</label>
+              <input class="form-input" id="h-estacionamiento" placeholder="Sí, gratuito / $10 por noche" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mascotas</label>
+              <input class="form-input" id="h-mascotas" placeholder="No permitidas / Sí, con cargo adicional" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Piscina</label>
+              <input class="form-input" id="h-piscina" placeholder="Sí, de 8:00 AM a 8:00 PM" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Spa</label>
+              <input class="form-input" id="h-spa" placeholder="Sí, de 9:00 AM a 7:00 PM, previa reserva" />
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label class="form-label">Política de cancelación</label>
+              <input class="form-input" id="h-politica_cancelacion" placeholder="Cancelación gratuita hasta 48h antes del check-in" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Formas de pago</label>
+              <input class="form-input" id="h-formas_pago" placeholder="Tarjeta de crédito, efectivo, transferencia" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Transfer aeropuerto</label>
+              <input class="form-input" id="h-transfer_aeropuerto" placeholder="Disponible, $40 USD por trayecto" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">⭐ Reseñas Online</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="form-group">
+              <label class="form-label">URL de Google Reviews</label>
+              <input class="form-input" id="h-googleReviewUrl" placeholder="https://g.page/r/..." />
+              <div class="form-hint">Link para que los huéspedes dejen su reseña en Google</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">URL de Booking Reviews</label>
+              <input class="form-input" id="h-bookingReviewUrl" placeholder="https://www.booking.com/..." />
+              <div class="form-hint">Link para reseñas en Booking.com</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:right;padding-top:8px">
+          <button class="btn btn-gold" onclick="saveHotel()">💾 Guardar y actualizar Aria</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ CREDENCIALES ══════════ -->
+    <div id="sec-credenciales" class="section">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+
+        <!-- Anthropic -->
+        <div class="card">
+          <div class="card-title">🧠 Clave de Inteligencia Artificial</div>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+            Esta clave le permite a Aria pensar y generar respuestas. La obtienes en
+            <strong>console.anthropic.com</strong> → API Keys.
+          </p>
+          <div id="cred-anthropic-status" style="margin-bottom:14px"></div>
+          <div class="form-group">
+            <label class="form-label">Clave de Anthropic (Claude)</label>
+            <input class="form-input" id="cred-anthropic" type="password" placeholder="sk-ant-api03-..." />
+            <div class="form-hint">Empieza con <code>sk-ant-api03-</code></div>
+          </div>
+          <button class="btn btn-primary" onclick="saveCred('anthropic')">Guardar clave</button>
+        </div>
+
+        <!-- Telegram -->
+        <div class="card">
+          <div class="card-title">✈️ Token de Bot de Telegram</div>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+            Lo obtienes en Telegram hablando con <strong>@BotFather</strong> → /newbot.
+          </p>
+          <div id="cred-telegram-status" style="margin-bottom:14px"></div>
+          <div class="form-group">
+            <label class="form-label">Token del bot de Telegram</label>
+            <input class="form-input" id="cred-telegram" type="password" placeholder="123456789:AAFabc..." />
+            <div class="form-hint">Formato: números:letras</div>
+          </div>
+          <button class="btn btn-primary" onclick="saveCred('telegram')">Guardar token</button>
+        </div>
+      </div>
+
+      <!-- fal.ai -->
+      <div class="card" style="margin-top:24px">
+        <div class="card-title">🎨 fal.ai — Generación de Imágenes y Videos</div>
+        <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+          Permite al Staff Bot generar imágenes y videos con IA para posts, reels y anuncios.
+          Obtén tu API key en <strong>fal.ai</strong> → API Keys.
+        </p>
+        <div id="cred-fal-status" style="margin-bottom:14px"></div>
+        <div class="form-group">
+          <label class="form-label">API Key de fal.ai</label>
+          <input class="form-input" id="cred-fal" type="password" placeholder="fal-key-..." />
+          <div class="form-hint">Empieza con <code>fal-key-</code> o similar.</div>
+        </div>
+        <button class="btn btn-primary" onclick="saveCred('fal')">Guardar clave fal.ai</button>
+      </div>
+
+      <!-- Staff Bot -->
+      <div class="card" style="margin-top:24px">
+        <div class="card-title">🤖 Bot de Staff (Telegram Admin)</div>
+        <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+          Un bot de Telegram <strong>separado</strong> para el equipo del hotel. Permite crear campañas de outreach,
+          generar contenido y ejecutar skills directamente desde Telegram, sin necesidad del dashboard.
+        </p>
+        <div id="staffbot-status-bar" style="margin-bottom:16px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div class="form-group">
+            <label class="form-label">Token del Staff Bot</label>
+            <input class="form-input" id="sb-token" type="password" placeholder="Token de @BotFather (bot DISTINTO al de Aria)" />
+            <div class="form-hint">Crea un nuevo bot en @BotFather. <strong>No uses el mismo token que Aria.</strong></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telegram IDs autorizados (opcional)</label>
+            <input class="form-input" id="sb-users" placeholder="123456789,987654321" />
+            <div class="form-hint">IDs separados por coma. Vacío = cualquier persona puede usarlo (no recomendado).</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-gold" onclick="saveStaffBot()">💾 Guardar y activar</button>
+          <button class="btn btn-outline" onclick="stopStaffBot()">⏹ Detener bot</button>
+        </div>
+        <div style="background:#F9F7F4;border-radius:10px;padding:14px;margin-top:16px;font-size:.82rem;color:var(--muted)">
+          <strong style="color:var(--text)">Comandos disponibles en el bot de staff:</strong><br>
+          <code>/status</code> · <code>/outreach</code> · <code>/contacts</code> · <code>/sequences</code> ·
+          <code>/generate</code> · <code>/resena</code> · <code>/post</code> · <code>/email</code><br>
+          <strong style="color:var(--text)">Nuevos con IA generativa:</strong>
+          <code>/imagen &lt;desc&gt;</code> · <code>/video &lt;desc&gt;</code> · <code>/anuncio &lt;producto&gt;</code> · <code>/kb &lt;búsqueda&gt;</code>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div class="card" style="margin-top:24px">
+        <div class="card-title">📖 ¿Cómo obtener las credenciales?</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+          <div>
+            <div style="display:flex;gap:12px;margin-bottom:12px">
+              <div class="step-badge">1</div>
+              <div>
+                <div style="font-weight:600;font-size:.875rem">Crea una cuenta en Anthropic</div>
+                <div style="font-size:.8rem;color:var(--muted)">Ve a console.anthropic.com y regístrate con tu email.</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-bottom:12px">
+              <div class="step-badge">2</div>
+              <div>
+                <div style="font-weight:600;font-size:.875rem">Ve a API Keys</div>
+                <div style="font-size:.8rem;color:var(--muted)">En el panel de Anthropic, clic en "API Keys" → "Create Key".</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div class="step-badge">3</div>
+              <div>
+                <div style="font-weight:600;font-size:.875rem">Copia y pega aquí</div>
+                <div style="font-size:.8rem;color:var(--muted)">La clave empieza con <code>sk-ant-api03-</code>. Pégala en el campo de arriba.</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;gap:12px;margin-bottom:12px">
+              <div class="step-badge">1</div>
+              <div>
+                <div style="font-weight:600;font-size:.875rem">Abre Telegram</div>
+                <div style="font-size:.8rem;color:var(--muted)">Busca <strong>@BotFather</strong> en Telegram y ábrelo.</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-bottom:12px">
+              <div class="step-badge">2</div>
+              <div>
+                <div style="font-weight:600;font-size:.875rem">Crea un bot nuevo</div>
+                <div style="font-size:.8rem;color:var(--muted)">Escribe <code>/newbot</code>, elige nombre y username (debe terminar en "bot").</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div class="step-badge">3</div>
+              <div>
+                <div style="font-weight:600;font-size:.875rem">Copia el token</div>
+                <div style="font-size:.8rem;color:var(--muted)">BotFather te dará el token. Pégalo en el campo de arriba.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ CANALES ══════════ -->
+    <div id="sec-canales" class="section">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
+
+        <!-- Telegram -->
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+            <div>
+              <div style="font-size:1.5rem;margin-bottom:6px">✈️</div>
+              <div style="font-weight:700;font-size:1rem">Telegram</div>
+              <div style="font-size:.8rem;color:var(--muted)">Ideal para hotel y staff</div>
+            </div>
+            <div id="ch-telegram-chip"></div>
+          </div>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+            Telegram está activo cuando el gateway está corriendo y el token está configurado.
+            Los huéspedes envían un mensaje al bot y Aria responde al instante.
+          </p>
+          <div style="background:var(--cream);border-radius:8px;padding:12px;font-size:.8rem;margin-bottom:14px">
+            <div style="font-weight:600;margin-bottom:6px">Para que un huésped pueda chatear con Aria:</div>
+            <ol style="margin:0;padding-left:18px;color:var(--muted);line-height:1.8">
+              <li>El huésped abre Telegram y busca tu bot</li>
+              <li>Envía cualquier mensaje — Aria le dará un código</li>
+              <li>Tú apruebas el código en la sección <strong>Pareamiento</strong></li>
+              <li>Aria empieza a responder normalmente</li>
+            </ol>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="goto('pairing')">🔗 Ir a Pareamiento →</button>
+        </div>
+
+        <!-- WhatsApp -->
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+            <div>
+              <div style="font-size:1.5rem;margin-bottom:6px">💬</div>
+              <div style="font-weight:700;font-size:1rem">WhatsApp</div>
+              <div style="font-size:.8rem;color:var(--muted)">El canal preferido de los huéspedes</div>
+            </div>
+            <div id="ch-whatsapp-chip"></div>
+          </div>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+            WhatsApp requiere vincular un número de teléfono escaneando un código QR,
+            similar a WhatsApp Web.
+          </p>
+          <div style="background:#FEF3C7;border-radius:8px;padding:12px;font-size:.8rem;margin-bottom:14px">
+            <div style="font-weight:600;color:#92400E;margin-bottom:4px">⚠️ Importante</div>
+            <div style="color:#78350F">Usa un número dedicado para el hotel, no tu celular personal. Una vez vinculado, solo puede usarse en un dispositivo a la vez.</div>
+          </div>
+          <div style="font-size:.82rem;color:var(--muted);margin-bottom:12px">
+            Para vincular WhatsApp, ejecuta este comando en la terminal del servidor:
+          </div>
+          <div style="background:#0D1117;color:#56d364;border-radius:8px;padding:10px;font-family:monospace;font-size:.8rem;margin-bottom:12px">
+            openclaw channels login
+          </div>
+          <div style="font-size:.78rem;color:var(--muted)">Luego escanea el QR con tu teléfono → WhatsApp → Dispositivos vinculados → Vincular dispositivo.</div>
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div class="card">
+        <div class="card-title">🧠 Skills activas de Aria</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div style="background:var(--cream);border-radius:10px;padding:14px;display:flex;gap:10px;align-items:flex-start">
+            <div style="font-size:1.3rem">⭐</div>
+            <div><div style="font-weight:600;font-size:.85rem">Responder reseñas</div><div style="font-size:.75rem;color:var(--muted)">Google, Booking, TripAdvisor</div></div>
+          </div>
+          <div style="background:var(--cream);border-radius:10px;padding:14px;display:flex;gap:10px;align-items:flex-start">
+            <div style="font-size:1.3rem">🛏️</div>
+            <div><div style="font-weight:600;font-size:.85rem">Describir habitaciones</div><div style="font-size:.75rem;color:var(--muted)">Booking, Airbnb, web hotel</div></div>
+          </div>
+          <div style="background:var(--cream);border-radius:10px;padding:14px;display:flex;gap:10px;align-items:flex-start">
+            <div style="font-size:1.3rem">✉️</div>
+            <div><div style="font-weight:600;font-size:.85rem">Emails de bienvenida</div><div style="font-size:.75rem;color:var(--muted)">Por tipo de visita</div></div>
+          </div>
+          <div style="background:var(--cream);border-radius:10px;padding:14px;display:flex;gap:10px;align-items:flex-start">
+            <div style="font-size:1.3rem">📸</div>
+            <div><div style="font-weight:600;font-size:.85rem">Redes sociales</div><div style="font-size:.75rem;color:var(--muted)">Instagram y Facebook</div></div>
+          </div>
+          <div style="background:var(--cream);border-radius:10px;padding:14px;display:flex;gap:10px;align-items:flex-start">
+            <div style="font-size:1.3rem">💬</div>
+            <div><div style="font-weight:600;font-size:.85rem">FAQ automático</div><div style="font-size:.75rem;color:var(--muted)">Preguntas de huéspedes 24/7</div></div>
+          </div>
+          <div style="background:var(--cream);border-radius:10px;padding:14px;display:flex;gap:10px;align-items:flex-start">
+            <div style="font-size:1.3rem">🤝</div>
+            <div><div style="font-weight:600;font-size:.85rem">Gestión de quejas</div><div style="font-size:.75rem;color:var(--muted)">Respuesta + acción interna</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ GATEWAY ══════════ -->
+    <div id="sec-gateway" class="section">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
+        <div class="card">
+          <div class="card-title">⚙️ Control del Gateway</div>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+            El gateway es el motor que mantiene a Aria activa y conectada a todos los canales.
+            Debe estar corriendo para que Aria responda mensajes.
+          </p>
+          <div style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--cream);border-radius:10px;margin-bottom:18px">
+            <div class="dot" id="gw-dot" style="background:var(--warn)"></div>
+            <span id="gw-status-text" style="font-weight:600;font-size:.875rem">Verificando estado...</span>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-gold" id="btn-start" onclick="startGateway()">▶ Iniciar Aria</button>
+            <button class="btn btn-danger" id="btn-stop" onclick="stopGateway()">⏹ Detener</button>
+          </div>
+          <div class="divider"></div>
+          <div style="font-size:.78rem;color:var(--muted)">
+            Puerto: <strong>18789</strong> · Modo: <strong>local</strong>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">💡 ¿Cuándo necesito reiniciar el gateway?</div>
+          <ul style="font-size:.82rem;color:var(--muted);line-height:2;padding-left:18px;margin:0">
+            <li>Cuando cambias las credenciales (API key, token de Telegram)</li>
+            <li>Cuando actualizas los datos del hotel en "Mi Hotel"</li>
+            <li>Cuando instalas una nueva versión de OpenClaw</li>
+            <li>Si Aria deja de responder por más de 5 minutos</li>
+            <li>Después de reiniciar la computadora del hotel</li>
+          </ul>
+          <div class="divider"></div>
+          <button class="btn btn-outline btn-sm" onclick="restartGateway()">↻ Reiniciar gateway</button>
+        </div>
+      </div>
+
+      <!-- Logs -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div class="card-title" style="margin:0">📋 Logs en vivo</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline btn-sm" onclick="loadLogs()">↻ Actualizar</button>
+            <button class="btn btn-outline btn-sm" onclick="clearLogView()">🗑 Limpiar vista</button>
+          </div>
+        </div>
+        <div class="log-box" id="log-box">Cargando logs...</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:8px">Se actualiza cada 10 segundos automáticamente.</div>
+      </div>
+    </div>
+
+    <!-- ══════════ PAIRING ══════════ -->
+    <div id="sec-pairing" class="section">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+
+        <div class="card">
+          <div class="card-title">🔗 Aprobar acceso de Telegram</div>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:18px">
+            Cuando alguien le escribe a tu bot de Telegram por primera vez, Aria le pide un código de seguridad.
+            Ese huésped o miembro del staff te comparte ese código y tú lo apruebas aquí.
+          </p>
+
+          <div style="background:var(--cream);border-radius:10px;padding:14px;margin-bottom:18px">
+            <div style="font-weight:600;font-size:.85rem;margin-bottom:8px">Cómo funciona:</div>
+            <div style="display:flex;gap:10px;margin-bottom:8px;align-items:flex-start">
+              <div class="step-badge" style="width:22px;height:22px;font-size:.7rem">1</div>
+              <div style="font-size:.8rem;color:var(--muted)">El huésped escribe cualquier mensaje al bot de Telegram</div>
+            </div>
+            <div style="display:flex;gap:10px;margin-bottom:8px;align-items:flex-start">
+              <div class="step-badge" style="width:22px;height:22px;font-size:.7rem">2</div>
+              <div style="font-size:.8rem;color:var(--muted)">Aria le responde con un código de 8 letras/números</div>
+            </div>
+            <div style="display:flex;gap:10px;margin-bottom:8px;align-items:flex-start">
+              <div class="step-badge" style="width:22px;height:22px;font-size:.7rem">3</div>
+              <div style="font-size:.8rem;color:var(--muted)">El huésped te comparte ese código</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start">
+              <div class="step-badge" style="width:22px;height:22px;font-size:.7rem">4</div>
+              <div style="font-size:.8rem;color:var(--muted)">Tú lo ingresas aquí y haces clic en "Aprobar"</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Canal</label>
+            <select class="form-input" id="pair-channel">
+              <option value="telegram">Telegram</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Código de pareamiento</label>
+            <input class="form-input" id="pair-code"
+              placeholder="Ej: X5NQ6LKN"
+              style="font-size:1.1rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase"
+              oninput="this.value=this.value.toUpperCase()"
+            />
+          </div>
+          <button class="btn btn-gold" onclick="approvePairing()" style="width:100%">✅ Aprobar acceso</button>
+          <div id="pair-result" style="margin-top:12px;font-size:.82rem"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📋 Historial de accesos aprobados</div>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+            Estos son los usuarios que ya tienen acceso aprobado para hablar con Aria.
+          </p>
+          <div style="background:var(--cream);border-radius:10px;padding:14px;font-size:.8rem;color:var(--muted)">
+            El historial completo de pareamiento se almacena en la configuración de OpenClaw
+            en <code>~/.openclaw/openclaw.json</code>.
+          </div>
+          <div class="divider"></div>
+          <div style="font-size:.82rem;color:var(--muted)">
+            <strong>Tip:</strong> Para el staff del hotel, aprueba sus cuentas de Telegram una sola vez
+            y podrán hablar con Aria indefinidamente.
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══════════ EMAIL & OUTREACH ══════════ -->
+    <div id="sec-email" class="section">
+
+      <!-- Tab nav -->
+      <div style="display:flex;gap:8px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border)">
+        <button class="btn btn-sm" id="tab-btn-autoresponder" onclick="emailTab('autoresponder')" style="background:var(--navy);color:#fff">📧 Auto-responder</button>
+        <button class="btn btn-sm btn-outline" id="tab-btn-outreach" onclick="emailTab('outreach')">📤 Outreach</button>
+      </div>
+
+      <!-- ── Auto-responder tab ── -->
+      <div id="email-tab-autoresponder">
+
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-title">📧 Conexión con Gmail</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="form-group">
+              <label class="form-label">Dirección de Gmail</label>
+              <input class="form-input" id="em-email" type="email" placeholder="hotel@gmail.com" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nombre del remitente</label>
+              <input class="form-input" id="em-sender" type="text" placeholder="Aria — Hotel Casa del Mar" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">App Password de Google</label>
+            <input class="form-input" id="em-pass" type="password" placeholder="xxxx xxxx xxxx xxxx" />
+            <div class="form-hint">
+              1. Activa verificación en 2 pasos en tu cuenta Google.<br>
+              2. Ve a <strong>myaccount.google.com → Seguridad → Contraseñas de aplicaciones</strong> y crea una para "Correo".<br>
+              3. En Gmail activa IMAP: <strong>Configuración → Ver toda la configuración → Reenvío e IMAP → Habilitar IMAP</strong>.
+            </div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-gold" onclick="saveEmailSettings()">💾 Guardar conexión</button>
+            <button class="btn btn-outline" onclick="testEmail()">📨 Enviar correo de prueba</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🤖 Auto-responder de Gmail</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div>
+              <div style="font-weight:600;margin-bottom:6px">Estado</div>
+              <div id="ar-status-chip"><span class="chip chip-err"><span class="dot dot-err"></span>Inactivo</span></div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-gold" id="btn-ar-start" onclick="startAutoresponder()">▶ Activar</button>
+              <button class="btn btn-outline" id="btn-ar-stop" onclick="stopAutoresponder()" disabled>⏹ Desactivar</button>
+            </div>
+          </div>
+          <div style="background:#F9F7F4;border-radius:10px;padding:16px;font-size:.85rem;color:var(--muted);line-height:1.65">
+            <strong style="color:var(--text)">¿Cómo funciona?</strong><br>
+            Aria monitorea tu bandeja de Gmail cada 5 minutos. Cuando llega un correo nuevo, genera
+            una respuesta personalizada usando los datos del hotel y la envía automáticamente.
+            El correo original queda marcado como leído.
+          </div>
+        </div>
+
+      </div><!-- /autoresponder tab -->
+
+      <!-- ── Outreach tab ── -->
+      <div id="email-tab-outreach" style="display:none">
+
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
+          <div class="stat-card"><div class="stat-icon">👥</div><div><div class="stat-label">Contactos</div><div class="stat-value" id="ot-contacts">—</div></div></div>
+          <div class="stat-card"><div class="stat-icon">📋</div><div><div class="stat-label">Secuencias</div><div class="stat-value" id="ot-sequences">—</div></div></div>
+          <div class="stat-card"><div class="stat-icon">▶</div><div><div class="stat-label">Activas</div><div class="stat-value" id="ot-active">—</div></div></div>
+          <div class="stat-card"><div class="stat-icon">📨</div><div><div class="stat-label">Enviados</div><div class="stat-value" id="ot-sent">—</div></div></div>
+        </div>
+
+        <!-- Contacts -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-title">👥 Lista de Contactos</div>
+          <div class="form-group">
+            <label class="form-label">Pega tu CSV aquí</label>
+            <textarea class="form-input" id="csv-input" rows="6"
+              style="font-family:monospace;font-size:.8rem"
+              placeholder="nombre,email,empresa,cargo&#10;María García,maria@hotel.com,Hotel Plaza,Directora&#10;Carlos López,carlos@inn.com,Boutique Inn,Gerente"></textarea>
+            <div class="form-hint">Primera fila = encabezados. La columna <strong>email</strong> es obligatoria.
+              Columnas reconocidas: nombre/name, empresa/company, cargo/role.</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn btn-gold" onclick="importContacts()">📥 Importar contactos</button>
+            <button class="btn btn-danger btn-sm" onclick="clearContacts()">🗑 Limpiar lista</button>
+            <span id="contact-count" style="font-size:.82rem;color:var(--muted)"></span>
+          </div>
+        </div>
+
+        <!-- Sequences -->
+        <div class="card" style="margin-bottom:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div class="card-title" style="margin-bottom:0">📋 Secuencias de Emails</div>
+            <button class="btn btn-gold btn-sm" onclick="toggleNewSeqForm()">+ Nueva secuencia</button>
+          </div>
+          <div id="sequences-list">
+            <p style="color:var(--muted);font-size:.85rem">No hay secuencias. Crea la primera con el botón de arriba.</p>
+          </div>
+        </div>
+
+        <!-- New sequence form -->
+        <div class="card" id="new-seq-form" style="display:none;margin-bottom:20px">
+          <div class="card-title">✏️ Nueva Secuencia</div>
+          <div class="form-group">
+            <label class="form-label">Nombre de la secuencia</label>
+            <input class="form-input" id="seq-name" placeholder="Ej: Prospección directores de hotel" />
+          </div>
+          <div>
+            <div class="form-label" style="margin-bottom:12px">Pasos</div>
+            <div id="steps-container"></div>
+            <button class="btn btn-outline btn-sm" onclick="addStep()" style="margin-top:10px">+ Agregar paso</button>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px">
+            <button class="btn btn-gold" onclick="saveSequence()">💾 Crear secuencia</button>
+            <button class="btn btn-outline" onclick="toggleNewSeqForm()">Cancelar</button>
+          </div>
+        </div>
+
+        <!-- Preview box -->
+        <div class="card" id="preview-box" style="display:none">
+          <div class="card-title">👁 Preview — generado por Aria</div>
+          <div style="margin-bottom:10px"><strong>Asunto:</strong> <span id="preview-subject" style="color:var(--navy)"></span></div>
+          <div style="background:#F9F7F4;border-radius:10px;padding:16px;font-size:.85rem;
+               white-space:pre-wrap;line-height:1.7;max-height:320px;overflow-y:auto" id="preview-body"></div>
+          <div style="margin-top:10px;font-size:.78rem;color:var(--muted)">Contacto: <span id="preview-contact"></span></div>
+          <button class="btn btn-outline btn-sm" style="margin-top:12px"
+            onclick="document.getElementById('preview-box').style.display='none'">Cerrar preview</button>
+        </div>
+
+      </div><!-- /outreach tab -->
+    </div><!-- /sec-email -->
+
+    <!-- ══════════ KNOWLEDGE BASE ══════════ -->
+    <div id="sec-kb" class="section">
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <button id="kb-tab-btn-docs"   class="btn btn-sm" onclick="kbTab('docs')"   style="background:var(--navy);color:#fff">📄 Documentos</button>
+        <button id="kb-tab-btn-urls"   class="btn btn-sm btn-outline" onclick="kbTab('urls')">🔗 URLs</button>
+        <button id="kb-tab-btn-images" class="btn btn-sm btn-outline" onclick="kbTab('images')">🖼 Imágenes</button>
+      </div>
+
+      <!-- TAB: Documentos -->
+      <div id="kb-tab-docs">
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-title">📄 Subir documentos</div>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+            Sube PDFs, DOCX o TXT. Aria extraerá el texto y lo usará para responder preguntas de huéspedes.
+          </p>
+          <div id="kb-drop-docs"
+            style="border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:border .2s"
+            onclick="document.getElementById('kb-file-docs').click()"
+            ondragover="event.preventDefault();this.style.borderColor='var(--gold)'"
+            ondragleave="this.style.borderColor='var(--border)'"
+            ondrop="kbDropDocs(event)">
+            <div style="font-size:2rem;margin-bottom:8px">📄</div>
+            <div style="font-weight:600;margin-bottom:4px">Arrastra o haz clic para subir</div>
+            <div style="font-size:.78rem;color:var(--muted)">PDF, DOCX, TXT · Máx 20 MB</div>
+          </div>
+          <input type="file" id="kb-file-docs" accept=".pdf,.docx,.txt,.md" style="display:none" onchange="uploadKBFile(this.files[0], 'doc')">
+        </div>
+        <div id="kb-list-docs" class="card">
+          <div class="card-title">📋 Documentos en el KB</div>
+          <div id="kb-docs-content"><p style="color:var(--muted);font-size:.85rem">Cargando...</p></div>
+        </div>
+      </div>
+
+      <!-- TAB: URLs -->
+      <div id="kb-tab-urls" style="display:none">
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-title">🔗 Agregar URL</div>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+            Agrega páginas web, perfiles de redes sociales o URLs de anuncios. Aria tendrá contexto de esa página.
+          </p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div class="form-group" style="grid-column:1/-1">
+              <label class="form-label">URL *</label>
+              <input class="form-input" id="kb-url-url" placeholder="https://www.mihotel.com" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Título</label>
+              <input class="form-input" id="kb-url-title" placeholder="Ej: Sitio web del hotel" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Descripción (contenido clave)</label>
+              <input class="form-input" id="kb-url-desc" placeholder="Hotel boutique 5 estrellas con piscina infinita y spa..." />
+            </div>
+          </div>
+          <button class="btn btn-gold" onclick="addKBUrl()">➕ Agregar URL</button>
+        </div>
+        <div class="card">
+          <div class="card-title">🔗 URLs en el KB</div>
+          <div id="kb-urls-content"><p style="color:var(--muted);font-size:.85rem">Cargando...</p></div>
+        </div>
+      </div>
+
+      <!-- TAB: Imágenes -->
+      <div id="kb-tab-images" style="display:none">
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-title">🖼 Subir imágenes del hotel</div>
+          <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">
+            Sube fotos del hotel, habitaciones o amenidades. Quedan almacenadas en el KB.
+          </p>
+          <div id="kb-drop-images"
+            style="border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:border .2s"
+            onclick="document.getElementById('kb-file-images').click()"
+            ondragover="event.preventDefault();this.style.borderColor='var(--gold)'"
+            ondragleave="this.style.borderColor='var(--border)'"
+            ondrop="kbDropImages(event)">
+            <div style="font-size:2rem;margin-bottom:8px">🖼</div>
+            <div style="font-weight:600;margin-bottom:4px">Arrastra o haz clic para subir</div>
+            <div style="font-size:.78rem;color:var(--muted)">JPG, PNG, WEBP · Máx 20 MB</div>
+          </div>
+          <input type="file" id="kb-file-images" accept=".jpg,.jpeg,.png,.webp" style="display:none" onchange="uploadKBFile(this.files[0], 'image')">
+        </div>
+        <div class="card">
+          <div class="card-title">🖼 Imágenes en el KB</div>
+          <div id="kb-images-content"><p style="color:var(--muted);font-size:.85rem">Cargando...</p></div>
+        </div>
+      </div>
+
+      <!-- Search test -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-title">🔍 Buscar en el KB (prueba)</div>
+        <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px">Prueba qué información encontrará Aria cuando un huésped haga una pregunta.</p>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+          <input class="form-input" id="kb-search-q" placeholder="Ej: piscina, política de cancelación..." style="flex:1"
+            onkeydown="if(event.key==='Enter')searchKB()">
+          <button class="btn btn-primary" onclick="searchKB()">🔍 Buscar</button>
+        </div>
+        <div id="kb-search-results" style="display:none">
+          <div style="font-weight:600;font-size:.85rem;margin-bottom:10px">Resultados:</div>
+          <div id="kb-search-list"></div>
+        </div>
+      </div>
+
+    </div><!-- /sec-kb -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+    <!-- ══════════ SERVICIOS ══════════ -->
+    <div id="sec-servicios" class="section">
+
+      <!-- Botón nuevo servicio -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <p style="color:var(--muted);font-size:.85rem;max-width:560px">
+          Agrega los servicios de tu hotel (spa, tours, restaurante, etc.). Aria usará esta información para responder preguntas de huéspedes, incluyendo precios, horarios e imágenes.
+        </p>
+        <button class="btn btn-gold" onclick="openSvcModal()">+ Nuevo servicio</button>
+      </div>
+
+      <!-- Lista de servicios -->
+      <div id="svc-list">
+        <div style="text-align:center;padding:40px;color:var(--muted)">Cargando servicios…</div>
+      </div>
+
+      <!-- Modal: crear / editar servicio -->
+      <div id="svc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;overflow-y:auto">
+        <div style="background:var(--white);border-radius:16px;max-width:620px;margin:40px auto;padding:32px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+            <h3 id="svc-modal-title" style="font-size:1.1rem">Nuevo servicio</h3>
+            <button onclick="closeSvcModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted)">✕</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div style="grid-column:1/-1">
+              <label class="form-label">Nombre del servicio *</label>
+              <input class="form-input" id="svc-name" placeholder="Ej: Spa & Wellness, Tour al volcán, Restaurante La Terraza" />
+            </div>
+            <div>
+              <label class="form-label">Categoría</label>
+              <select class="form-input" id="svc-category">
+                <option value="spa">🧖 Spa & Wellness</option>
+                <option value="restaurant">🍽️ Restaurante</option>
+                <option value="tour">🗺️ Tours y Excursiones</option>
+                <option value="transport">🚗 Transporte</option>
+                <option value="activity">🏄 Actividades</option>
+                <option value="other">📌 Otros servicios</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Precio / Tarifa</label>
+              <input class="form-input" id="svc-price" placeholder="Ej: Desde $50 USD por persona" />
+            </div>
+            <div style="grid-column:1/-1">
+              <label class="form-label">Descripción</label>
+              <textarea class="form-input" id="svc-desc" rows="3" placeholder="Describe el servicio: qué incluye, para quién es ideal, por qué lo recomiendas…" style="resize:vertical"></textarea>
+            </div>
+            <div>
+              <label class="form-label">Horario</label>
+              <input class="form-input" id="svc-schedule" placeholder="Ej: Lun–Dom, 9:00 AM – 8:00 PM" />
+            </div>
+            <div>
+              <label class="form-label">Cómo reservar / contacto</label>
+              <input class="form-input" id="svc-contact" placeholder="Ej: Ext. 205 · WhatsApp · Recepción" />
+            </div>
+            <div style="grid-column:1/-1">
+              <label class="form-label">¿Qué incluye?</label>
+              <input class="form-input" id="svc-includes" placeholder="Ej: Acceso a sauna, jacuzzi y 1 tratamiento de 45 min" />
+            </div>
+            <div style="grid-column:1/-1">
+              <label class="form-label">Notas adicionales</label>
+              <input class="form-input" id="svc-notes" placeholder="Ej: Reserva con 24h de anticipación · No apto para embarazadas" />
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:22px;justify-content:flex-end">
+            <button class="btn btn-outline" onclick="closeSvcModal()">Cancelar</button>
+            <button class="btn btn-gold" id="svc-save-btn" onclick="saveService()">Guardar servicio</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /sec-servicios -->
+
+    <!-- ══════════ TICKETS ══════════ -->
+    <div id="sec-tickets" class="section">
+      <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-sm" id="tkt-filter-open"   onclick="ticketFilter('open')"   style="background:var(--navy);color:#fff">🟡 Abiertos</button>
+        <button class="btn btn-sm btn-outline" id="tkt-filter-all"    onclick="ticketFilter('all')">Todos</button>
+        <button class="btn btn-sm btn-outline" id="tkt-filter-resolved" onclick="ticketFilter('resolved')">✅ Resueltos</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-gold" onclick="openTktModal()">+ Nuevo ticket</button>
+      </div>
+
+      <div id="tkt-list">
+        <div style="text-align:center;padding:40px;color:var(--muted)">Cargando…</div>
+      </div>
+
+      <!-- Modal ticket -->
+      <div id="tkt-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;overflow-y:auto">
+        <div style="background:var(--white);border-radius:16px;max-width:520px;margin:60px auto;padding:32px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 style="font-size:1.1rem">Nuevo ticket</h3>
+            <button onclick="closeTktModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted)">✕</button>
+          </div>
+          <div style="display:grid;gap:12px">
+            <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px">
+              <div>
+                <label class="form-label">Habitación</label>
+                <input class="form-input" id="tkt-room" placeholder="205" />
+              </div>
+              <div>
+                <label class="form-label">Nombre del huésped</label>
+                <input class="form-input" id="tkt-guest" placeholder="Carlos García" />
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Descripción *</label>
+              <textarea class="form-input" id="tkt-desc" rows="3" placeholder="¿Cuál es la solicitud o problema?" style="resize:vertical"></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div>
+                <label class="form-label">Prioridad</label>
+                <select class="form-input" id="tkt-priority">
+                  <option value="low">🟢 Baja</option>
+                  <option value="normal" selected>🟡 Normal</option>
+                  <option value="high">🟠 Alta</option>
+                  <option value="urgent">🔴 Urgente</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Estado</label>
+                <select class="form-input" id="tkt-status">
+                  <option value="pending">⏳ Pendiente</option>
+                  <option value="in_progress">🔧 En proceso</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+            <button class="btn btn-outline" onclick="closeTktModal()">Cancelar</button>
+            <button class="btn btn-gold" onclick="saveTicket()">Crear ticket</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /sec-tickets -->
+
+    <!-- ══════════ HUÉSPEDES ══════════ -->
+    <div id="sec-huespedes" class="section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <p style="color:var(--muted);font-size:.85rem;max-width:500px">
+          Registra huéspedes para activar pre check-in, pulso de satisfacción, upselling y ciclo de reseñas.
+        </p>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-outline btn-sm" id="btn-toggle-history" onclick="toggleGuestHistory()">📜 Ver historial</button>
+          <button class="btn btn-gold" onclick="openGuestModal()">+ Nuevo huésped</button>
+        </div>
+      </div>
+
+      <div id="guest-list">
+        <div style="text-align:center;padding:40px;color:var(--muted)">Cargando…</div>
+      </div>
+
+      <div id="guest-history-section" style="display:none;margin-top:28px">
+        <div style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;margin-bottom:14px;color:var(--navy)">📜 Historial de estadías pasadas</div>
+        <div id="guest-history-list">
+          <div style="text-align:center;padding:20px;color:var(--muted)">Cargando historial…</div>
+        </div>
+      </div>
+
+      <!-- Modal huésped -->
+      <div id="guest-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;overflow-y:auto">
+        <div style="background:var(--white);border-radius:16px;max-width:580px;margin:40px auto;padding:32px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 id="guest-modal-title" style="font-size:1.1rem">Nuevo huésped</h3>
+            <button onclick="closeGuestModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted)">✕</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div style="grid-column:1/-1">
+              <label class="form-label">Nombre completo *</label>
+              <input class="form-input" id="g-name" placeholder="María García" />
+            </div>
+            <div>
+              <label class="form-label">Habitación</label>
+              <input class="form-input" id="g-room" placeholder="101" />
+            </div>
+            <div>
+              <label class="form-label">Canal de contacto</label>
+              <select class="form-input" id="g-channel">
+                <option value="whatsapp">WhatsApp</option>
+                <option value="telegram">Telegram</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Check-in *</label>
+              <input class="form-input" id="g-checkin" type="date" />
+            </div>
+            <div>
+              <label class="form-label">Check-out *</label>
+              <input class="form-input" id="g-checkout" type="date" />
+            </div>
+            <div style="grid-column:1/-1">
+              <label class="form-label">Tipo de visita</label>
+              <select class="form-input" id="g-type">
+                <option value="auto">🤖 Detectar automáticamente desde las notas</option>
+                <option value="leisure">🌴 Vacaciones</option>
+                <option value="anniversary">💍 Aniversario</option>
+                <option value="honeymoon">🌙 Luna de miel</option>
+                <option value="birthday">🎂 Cumpleaños</option>
+                <option value="family">👨‍👩‍👧 Familia con niños</option>
+                <option value="business">💼 Viaje de negocios</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1">
+              <label class="form-label">Notas (celebraciones, preferencias, restricciones)</label>
+              <input class="form-input" id="g-notes" placeholder="Ej: Celebran su 10° aniversario, alérgica al mariscos" />
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:22px;justify-content:flex-end">
+            <button class="btn btn-outline" onclick="closeGuestModal()">Cancelar</button>
+            <button class="btn btn-gold" id="g-save-btn" onclick="saveGuest()">Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel de mensaje generado -->
+      <div id="guest-msg-panel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;overflow-y:auto">
+        <div style="background:var(--white);border-radius:16px;max-width:540px;margin:80px auto;padding:32px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 id="gmp-title" style="font-size:1.05rem"></h3>
+            <button onclick="document.getElementById('guest-msg-panel').style.display='none'" style="background:none;border:none;font-size:1.4rem;cursor:pointer">✕</button>
+          </div>
+          <div style="background:#F9F7F4;border-radius:10px;padding:16px;font-size:.9rem;line-height:1.7;white-space:pre-wrap;margin-bottom:16px" id="gmp-msg"></div>
+          <button class="btn btn-outline btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('gmp-msg').textContent).then(()=>toast('Copiado'))">📋 Copiar mensaje</button>
+        </div>
+      </div>
+
+      <!-- Panel de respuesta de reseña -->
+      <div id="review-response-panel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;overflow-y:auto">
+        <div style="background:var(--white);border-radius:16px;max-width:480px;margin:100px auto;padding:32px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 id="rrp-title" style="font-size:1.05rem">¿Cómo fue la experiencia?</h3>
+            <button onclick="document.getElementById('review-response-panel').style.display='none'" style="background:none;border:none;font-size:1.4rem;cursor:pointer">✕</button>
+          </div>
+          <p style="font-size:.85rem;color:var(--muted);margin-bottom:20px">Registra el resultado de la reseña para gestionar el ciclo correctamente.</p>
+          <div class="form-group">
+            <label class="form-label">Comentario recibido (opcional)</label>
+            <textarea class="form-input" id="rrp-feedback" rows="3" placeholder="Escribe aquí el comentario del huésped..."></textarea>
+          </div>
+          <input type="hidden" id="rrp-guest-id" />
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-sm" style="background:#D1FAE5;color:#065F46;border:1px solid #A7F3D0;flex:1;padding:12px" onclick="recordReviewResponse('positive')">🟢 Fue positiva</button>
+            <button class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;border:1px solid #FECACA;flex:1;padding:12px" onclick="recordReviewResponse('negative')">🔴 Fue negativa</button>
+          </div>
+          <div id="rrp-result" style="margin-top:14px;font-size:.85rem"></div>
+        </div>
+      </div>
+
+    </div><!-- /sec-huespedes -->
+
+    <!-- ══════════ MENÚ DIGITAL ══════════ -->
+    <div id="sec-menu" class="section">
+
+      <!-- Header con QR -->
+      <div class="card" style="margin-bottom:24px">
+        <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">
+          <div style="flex:1;min-width:260px">
+            <div class="card-title">🍽️ Menú Digital con QR</div>
+            <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px">
+              Tu menú tiene una URL pública que los huéspedes pueden acceder escaneando el código QR.
+              Compártela impresa en las mesas, habitaciones o recepción.
+            </p>
+            <div style="background:#F9F7F4;border-radius:10px;padding:14px;margin-bottom:14px">
+              <div style="font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:4px">URL pública del menú</div>
+              <div id="menu-url" style="font-size:.875rem;color:var(--navy);word-break:break-all"></div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-gold btn-sm" onclick="loadMenuQR()">↻ Actualizar QR</button>
+              <a id="menu-qr-download" class="btn btn-outline btn-sm" download="menu-qr.png" target="_blank">⬇ Descargar QR</a>
+            </div>
+          </div>
+          <div id="menu-qr-container" style="flex-shrink:0;text-align:center">
+            <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px">Código QR</div>
+            <img id="menu-qr-img" src="" alt="QR del menú" style="width:150px;height:150px;border-radius:10px;border:1px solid var(--border)" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de platos -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-size:.85rem;color:var(--muted)">Agrega los platos y bebidas de tu menú. Aria los conocerá y podrá recomendarlos.</div>
+        <button class="btn btn-gold" onclick="openMenuModal()">+ Agregar plato</button>
+      </div>
+
+      <div id="menu-list">
+        <div style="text-align:center;padding:40px;color:var(--muted)">Cargando menú…</div>
+      </div>
+
+      <!-- Modal: crear / editar plato -->
+      <div id="menu-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;overflow-y:auto">
+        <div style="background:var(--white);border-radius:16px;max-width:580px;margin:40px auto;padding:32px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+            <h3 id="menu-modal-title" style="font-size:1.1rem">Nuevo plato</h3>
+            <button onclick="closeMenuModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted)">✕</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div style="grid-column:1/-1">
+              <label class="form-label">Nombre del plato *</label>
+              <input class="form-input" id="menu-name" placeholder="Ej: Risotto de champiñones" />
+            </div>
+            <div>
+              <label class="form-label">Categoría</label>
+              <select class="form-input" id="menu-category">
+                <option value="entrada">🥗 Entradas</option>
+                <option value="principal">🍽️ Plato Principal</option>
+                <option value="postre">🍮 Postre</option>
+                <option value="bebida">🍹 Bebida</option>
+                <option value="especial">⭐ Especial del día</option>
+                <option value="otro">📌 Otros</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Precio</label>
+              <input class="form-input" id="menu-price" placeholder="Ej: $18 USD" />
+            </div>
+            <div style="grid-column:1/-1">
+              <label class="form-label">Descripción</label>
+              <textarea class="form-input" id="menu-desc" rows="2" placeholder="Breve descripción del plato..." style="resize:vertical"></textarea>
+            </div>
+            <div style="grid-column:1/-1">
+              <label class="form-label">Alérgenos</label>
+              <input class="form-input" id="menu-allergens" placeholder="Ej: Contiene gluten, nueces, lácteos" />
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:22px;justify-content:flex-end">
+            <button class="btn btn-outline" onclick="closeMenuModal()">Cancelar</button>
+            <button class="btn btn-gold" id="menu-save-btn" onclick="saveMenuItem()">Guardar</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /sec-menu -->
+
+    <!-- ══════════════════ HABITACIONES ══════════════════ -->
+    <div id="sec-rooms" class="section">
+      <div class="content">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+          <div>
+            <h2 style="font-family:'Playfair Display',serif;font-size:1.35rem;margin-bottom:4px">Tablero de Habitaciones</h2>
+            <p style="color:var(--muted);font-size:.84rem">Estado en tiempo real de cada habitación</p>
+          </div>
+          <button class="btn btn-gold" onclick="openRoomModal()">+ Agregar habitación</button>
+        </div>
+
+        <!-- Kanban board -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px" id="rooms-board">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- Room modal -->
+        <div id="room-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;overflow-y:auto">
+          <div style="margin:60px auto;max-width:440px;background:#fff;border-radius:18px;padding:32px;position:relative">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+              <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem" id="room-modal-title">Nueva habitación</h3>
+              <button onclick="closeRoomModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted)">✕</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+              <div>
+                <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Número *</label>
+                <input class="form-input" id="room-number" placeholder="101" />
+              </div>
+              <div>
+                <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Piso</label>
+                <input class="form-input" id="room-floor" placeholder="1" />
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+              <div>
+                <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Tipo</label>
+                <select class="form-input" id="room-type">
+                  <option value="individual">Individual</option>
+                  <option value="doble" selected>Doble</option>
+                  <option value="suite">Suite</option>
+                  <option value="familiar">Familiar</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Estado</label>
+                <select class="form-input" id="room-status">
+                  <option value="libre">🟢 Libre</option>
+                  <option value="ocupada">🔴 Ocupada</option>
+                  <option value="limpieza">🧹 Limpieza</option>
+                  <option value="mantenimiento">🔧 Mantenimiento</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-bottom:20px">
+              <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">Notas</label>
+              <textarea class="form-input" id="room-notes" rows="2" placeholder="Vista al mar, jacuzzi, etc."></textarea>
+            </div>
+            <input type="hidden" id="room-edit-id" />
+            <div style="display:flex;gap:10px;justify-content:flex-end">
+              <button class="btn btn-outline" onclick="closeRoomModal()">Cancelar</button>
+              <button class="btn btn-gold" onclick="saveRoom()">Guardar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /sec-rooms -->
+
+    <!-- ══════════════════ CHAT WEB ══════════════════ -->
+    <div id="sec-chat" class="section">
+      <div class="content">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+          <div>
+            <h2 style="font-family:'Playfair Display',serif;font-size:1.35rem;margin-bottom:4px">Chat Web de Huéspedes</h2>
+            <p style="color:var(--muted);font-size:.84rem">Conversaciones iniciadas desde la página pública de chat</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span id="chat-public-url" style="font-size:.8rem;color:var(--muted);font-family:monospace"></span>
+            <button class="btn btn-outline btn-sm" onclick="loadChat()">↻ Actualizar</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:320px 1fr;gap:20px;height:calc(100vh - 240px)">
+          <!-- Session list -->
+          <div class="card" style="overflow-y:auto;padding:0">
+            <div id="chat-session-list" style="padding:0">
+              <div style="padding:16px;color:var(--muted);font-size:.85rem">Cargando...</div>
+            </div>
+          </div>
+          <!-- Thread panel -->
+          <div class="card" style="display:flex;flex-direction:column;padding:0" id="chat-thread-panel">
+            <div id="chat-thread-header" style="padding:16px 20px;border-bottom:1px solid var(--border);font-weight:600;display:flex;align-items:center;justify-content:space-between">
+              <span id="chat-thread-name" style="color:var(--muted);font-size:.9rem">Selecciona una conversación</span>
+              <button id="chat-close-btn" class="btn btn-outline btn-sm" style="display:none" onclick="closeChatSession()">Cerrar chat</button>
+            </div>
+            <div id="chat-thread-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
+            </div>
+            <div id="chat-reply-area" style="display:none;padding:12px 16px;border-top:1px solid var(--border);display:none">
+              <div style="display:flex;gap:10px">
+                <input class="form-input" id="chat-reply-input" placeholder="Escribe tu respuesta..." style="flex:1;border-radius:20px;padding:8px 16px" onkeydown="if(event.key==='Enter')sendChatReply()" />
+                <button class="btn btn-gold btn-sm" onclick="sendChatReply()">Enviar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /sec-chat -->
+
+    <!-- ══════════════════ ANALYTICS ══════════════════ -->
+    <div id="sec-analytics" class="section">
+      <div class="content">
+        <div style="margin-bottom:28px">
+          <h2 style="font-family:'Playfair Display',serif;font-size:1.35rem;margin-bottom:4px">Analytics & KPIs</h2>
+          <p style="color:var(--muted);font-size:.84rem">Indicadores clave del hotel en tiempo real</p>
+        </div>
+
+        <!-- KPI cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:28px" id="analytics-kpis">
+          <div style="color:var(--muted);padding:24px;text-align:center" class="card">Cargando...</div>
+        </div>
+
+        <!-- Charts row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+          <div class="card">
+            <div class="card-title">🏨 Habitaciones por estado</div>
+            <div id="chart-rooms"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">🎫 Tickets por categoría</div>
+            <div id="chart-tickets"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">⭐ Reseñas</div>
+            <div id="chart-reviews"></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /sec-analytics -->
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ═══════════════ JAVASCRIPT ═══════════════ -->
+<script>
+const sections = {
+  dashboard:    { title: 'Dashboard',          sub: 'Resumen general de HotelClaw' },
+  hotel:        { title: 'Mi Hotel',           sub: 'Datos que Aria usa para atender huéspedes' },
+  credenciales: { title: 'Credenciales',       sub: 'Claves de API y tokens de canales' },
+  canales:      { title: 'Canales',            sub: 'Estado de las conexiones de mensajería' },
+  gateway:      { title: 'Gateway',            sub: 'Motor de HotelClaw — debe estar activo siempre' },
+  pairing:      { title: 'Pareamiento',        sub: 'Aprobar acceso de usuarios a Aria' },
+  email:        { title: 'Email & Outreach',   sub: 'Auto-responder Gmail y secuencias de correos' },
+  kb:           { title: 'Knowledge Base',     sub: 'Documentos, URLs e imágenes que Aria usa para responder' },
+  servicios:    { title: 'Servicios del Hotel',  sub: 'Spa, tours, restaurante y más — Aria los conoce y los recomienda' },
+  tickets:      { title: 'Tickets de Solicitudes', sub: 'Solicitudes y problemas de huéspedes en tiempo real' },
+  huespedes:    { title: 'Huéspedes',            sub: 'Pre check-in, pulso de satisfacción, upselling y ciclo de reseñas' },
+  menu:         { title: 'Menú Digital',         sub: 'Menú accesible por QR para los huéspedes' },
+  rooms:        { title: 'Habitaciones',          sub: 'Tablero de estado de habitaciones — limpieza, ocupación, mantenimiento' },
+  chat:         { title: 'Chat Web',              sub: 'Conversaciones en tiempo real con huéspedes desde la web' },
+  analytics:    { title: 'Analytics',             sub: 'KPIs y métricas del hotel' },
+};
+
+let currentSection = 'dashboard';
+let logInterval = null;
+let statusInterval = null;
+
+// ─── Navigation ────────────────────────────────────────────────────────────
+function goto(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const sec = document.getElementById('sec-' + id);
+  const nav = document.querySelector(`.nav-item[onclick="goto('${id}')"]`);
+  if (sec) sec.classList.add('active');
+  if (nav) nav.classList.add('active');
+
+  const meta = sections[id] || { title: id, sub: '' };
+  document.getElementById('topbar-title').textContent = meta.title;
+  document.getElementById('topbar-sub').textContent   = meta.sub;
+  currentSection = id;
+
+  // Section-specific init
+  if (id === 'hotel')        loadHotel();
+  if (id === 'credenciales') { loadCredentials(); loadStaffBotStatus(); }
+  if (id === 'gateway')      { loadLogs(); startLogAutoRefresh(); }
+  else stopLogAutoRefresh();
+  if (id === 'canales')      refreshStatus();
+  if (id === 'email')        { emailTab('autoresponder'); loadEmailSettings(); }
+  if (id === 'kb')           { kbTab('docs'); loadKB(); }
+  if (id === 'servicios')    loadServices();
+  if (id === 'tickets')      { ticketFilter('open'); loadTickets(); }
+  if (id === 'huespedes')    loadGuests();
+  if (id === 'menu')         { loadMenu(); loadMenuQR(); }
+  if (id === 'rooms')        loadRooms();
+  if (id === 'chat')         { loadChat(); showChatPublicUrl(); }
+  if (id === 'analytics')    loadAnalytics();
+}
+
+// ─── Toast ─────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = (type === 'ok' ? '✅ ' : '❌ ') + msg;
+  el.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3500);
+}
+
+// ─── API helpers ───────────────────────────────────────────────────────────
+async function api(url, opts = {}) {
+  try {
+    const r = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+    return await r.json();
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+// ─── Status ────────────────────────────────────────────────────────────────
+async function refreshStatus() {
+  const d = await api('/api/status');
+
+  const mkChip = (ok, labels) => {
+    const cls = ok ? 'chip-ok' : 'chip-err';
+    const dot = ok ? 'dot-ok' : 'dot-err';
+    return `<span class="chip ${cls}"><span class="dot ${dot}"></span>${ok ? labels[0] : labels[1]}</span>`;
+  };
+
+  // Dashboard stats
+  setHtml('ds-gateway',  mkChip(d.gateway,  ['Activo', 'Inactivo']));
+  setHtml('ds-telegram', mkChip(d.telegram, ['Conectado', 'Desconectado']));
+  setHtml('ds-whatsapp', mkChip(d.whatsapp, ['Vinculado', 'Sin vincular']));
+  setHtml('ds-skills',   '<span style="font-weight:700">6 activas</span>');
+
+  // Raw status
+  setHtml('ds-raw-status', `<pre class="log-line">${escHtml(d.raw || 'Sin datos')}</pre>`);
+
+  // Channel chips
+  setHtml('ch-telegram-chip', mkChip(d.telegram, ['Conectado', 'Sin token']));
+  setHtml('ch-whatsapp-chip', mkChip(d.whatsapp, ['Vinculado', 'Sin vincular']));
+
+  // Gateway section
+  const gwDot = document.getElementById('gw-dot');
+  const gwTxt = document.getElementById('gw-status-text');
+  if (gwDot && gwTxt) {
+    gwDot.className = 'dot ' + (d.gateway ? 'dot-ok' : 'dot-err');
+    gwTxt.textContent = d.gateway ? 'Gateway activo — Aria está respondiendo' : 'Gateway detenido — Aria no responde';
+  }
+
+  // Sidebar
+  const sidebarDot  = document.getElementById('sidebar-dot');
+  const sidebarText = document.getElementById('sidebar-status-text');
+  sidebarDot.className  = 'dot ' + (d.gateway ? 'dot-ok' : 'dot-err');
+  sidebarText.textContent = d.gateway ? 'Aria activa' : 'Gateway detenido';
+
+  // Hide welcome card if hotel seems configured
+  if (d.gateway) {
+    const wc = document.getElementById('welcome-card');
+    if (wc) wc.style.display = 'none';
+  }
+}
+
+// ─── Gateway controls ──────────────────────────────────────────────────────
+async function startGateway() {
+  const btn = document.getElementById('btn-start');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Iniciando...'; }
+  toast('Iniciando Aria...', 'ok');
+  await api('/api/gateway/start', { method: 'POST' });
+  setTimeout(async () => {
+    await refreshStatus();
+    if (btn) { btn.disabled = false; btn.innerHTML = '▶ Iniciar Aria'; }
+    toast('Aria está activa y lista 🛎️', 'ok');
+  }, 2500);
+}
+
+async function stopGateway() {
+  if (!confirm('¿Detener Aria? Los huéspedes no podrán recibir respuestas mientras esté detenida.')) return;
+  await api('/api/gateway/stop', { method: 'POST' });
+  setTimeout(() => { refreshStatus(); toast('Gateway detenido', 'err'); }, 1000);
+}
+
+async function restartGateway() {
+  toast('Reiniciando gateway...', 'ok');
+  await api('/api/gateway/stop', { method: 'POST' });
+  setTimeout(async () => {
+    await api('/api/gateway/start', { method: 'POST' });
+    setTimeout(() => { refreshStatus(); toast('Gateway reiniciado ✓', 'ok'); }, 2500);
+  }, 2000);
+}
+
+// ─── Logs ──────────────────────────────────────────────────────────────────
+async function loadLogs() {
+  const box = document.getElementById('log-box');
+  if (!box) return;
+  const { lines = [] } = await api('/api/gateway/logs');
+  box.innerHTML = lines.map(l => {
+    const cls = l.includes('error') || l.includes('Error') || l.includes('failed') ? 'err'
+              : l.includes('warn')  || l.includes('Warn')  ? 'warn'
+              : l.includes('start') || l.includes('running') || l.includes('enabled') ? 'ok'
+              : '';
+    return `<pre class="log-line ${cls}">${escHtml(l)}</pre>`;
+  }).join('') || '<pre class="log-line">Sin logs disponibles.</pre>';
+  box.scrollTop = box.scrollHeight;
+}
+
+function startLogAutoRefresh() {
+  stopLogAutoRefresh();
+  logInterval = setInterval(loadLogs, 10000);
+}
+function stopLogAutoRefresh() {
+  if (logInterval) { clearInterval(logInterval); logInterval = null; }
+}
+function clearLogView() {
+  const box = document.getElementById('log-box');
+  if (box) box.innerHTML = '<pre class="log-line" style="color:#6B7280">Vista limpiada. Los logs reales siguen en el servidor.</pre>';
+}
+
+// ─── Hotel data ────────────────────────────────────────────────────────────
+async function loadHotel() {
+  const d = await api('/api/hotel');
+  const keys = ['nombre','direccion','telefono','whatsapp','email','web',
+    'checkin','checkout','early_checkin','late_checkout','recepcion_24h',
+    'desayuno_incluido','desayuno_horario','desayuno_tipo',
+    'wifi_ssid','wifi_pass','estacionamiento','mascotas','piscina','spa',
+    'politica_cancelacion','formas_pago','transfer_aeropuerto',
+    'googleReviewUrl','bookingReviewUrl'];
+  keys.forEach(k => {
+    const el = document.getElementById('h-' + k);
+    if (el && d[k] !== undefined) el.value = d[k];
+  });
+}
+
+async function saveHotel() {
+  const keys = ['nombre','direccion','telefono','whatsapp','email','web',
+    'checkin','checkout','early_checkin','late_checkout','recepcion_24h',
+    'desayuno_incluido','desayuno_horario','desayuno_tipo',
+    'wifi_ssid','wifi_pass','estacionamiento','mascotas','piscina','spa',
+    'politica_cancelacion','formas_pago','transfer_aeropuerto',
+    'googleReviewUrl','bookingReviewUrl'];
+  const body = {};
+  keys.forEach(k => {
+    const el = document.getElementById('h-' + k);
+    if (el) body[k] = el.value;
+  });
+  if (!body.nombre) { toast('El nombre del hotel es obligatorio', 'err'); return; }
+  const r = await api('/api/hotel', { method: 'POST', body: JSON.stringify(body) });
+  if (r.ok) toast('Datos del hotel guardados. Aria los usará desde ahora 🛎️', 'ok');
+  else toast('Error al guardar: ' + (r.error || 'desconocido'), 'err');
+}
+
+// ─── Credentials ───────────────────────────────────────────────────────────
+async function loadCredentials() {
+  const d = await api('/api/credentials');
+  const mkStatus = (set, hint) => set
+    ? `<div class="chip chip-ok" style="margin-bottom:0"><span class="dot dot-ok"></span>Configurada: ${hint}</div>`
+    : `<div class="chip chip-err" style="margin-bottom:0"><span class="dot dot-err"></span>No configurada</div>`;
+  setHtml('cred-anthropic-status', mkStatus(d.anthropic_set, d.anthropic_hint));
+  setHtml('cred-telegram-status',  mkStatus(d.telegram_set,  d.telegram_hint));
+  setHtml('cred-fal-status',       mkStatus(d.fal_set,       d.fal_hint));
+}
+
+async function saveCred(type) {
+  const anthropic = document.getElementById('cred-anthropic')?.value?.trim();
+  const telegram  = document.getElementById('cred-telegram')?.value?.trim();
+  const fal       = document.getElementById('cred-fal')?.value?.trim();
+
+  if (type === 'anthropic' && !anthropic) { toast('Ingresa la clave de Anthropic', 'err'); return; }
+  if (type === 'telegram'  && !telegram)  { toast('Ingresa el token de Telegram', 'err');  return; }
+  if (type === 'fal'       && !fal)       { toast('Ingresa la API key de fal.ai', 'err');  return; }
+
+  const saveBody = { gateway: 'hotelclaw-gateway-secret-2026' };
+  if (type === 'anthropic') saveBody.anthropic = anthropic;
+  if (type === 'telegram')  saveBody.telegram  = telegram;
+  if (type === 'fal')       saveBody.fal       = fal;
+
+  const r = await api('/api/credentials', { method: 'POST', body: JSON.stringify(saveBody) });
+  if (r.ok) {
+    toast('Credencial guardada.', 'ok');
+    loadCredentials();
+    if (type === 'anthropic') document.getElementById('cred-anthropic').value = '';
+    if (type === 'telegram')  document.getElementById('cred-telegram').value  = '';
+    if (type === 'fal')       document.getElementById('cred-fal').value       = '';
+  } else {
+    toast('Error al guardar: ' + (r.error || 'desconocido'), 'err');
+  }
+}
+
+// ─── Pairing ───────────────────────────────────────────────────────────────
+async function approvePairing() {
+  const code    = document.getElementById('pair-code')?.value?.trim().toUpperCase();
+  const channel = document.getElementById('pair-channel')?.value || 'telegram';
+  if (!code) { toast('Ingresa el código de pareamiento', 'err'); return; }
+
+  const result = document.getElementById('pair-result');
+  if (result) result.innerHTML = '<span style="color:var(--muted)">⏳ Procesando...</span>';
+
+  const r = await api('/api/pairing/approve', { method: 'POST', body: JSON.stringify({ code, channel }) });
+
+  if (r.ok) {
+    toast('¡Acceso aprobado! Aria ya responderá a ese usuario.', 'ok');
+    if (result) result.innerHTML = `<div class="chip chip-ok">✅ Aprobado correctamente</div>`;
+    document.getElementById('pair-code').value = '';
+  } else {
+    toast('No se pudo aprobar: ' + (r.msg || r.error || 'código inválido'), 'err');
+    if (result) result.innerHTML = `<div class="chip chip-err">❌ ${escHtml(r.msg || 'Código no válido')}</div>`;
+  }
+}
+
+// ─── Utilities ─────────────────────────────────────────────────────────────
+function setHtml(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── Staff Bot ─────────────────────────────────────────────────────────────
+async function loadStaffBotStatus() {
+  const [status, creds] = await Promise.all([
+    api('/api/staffbot/status'),
+    api('/api/staffbot/credentials'),
+  ]);
+  const bar = document.getElementById('staffbot-status-bar');
+  if (!bar) return;
+  if (creds.tokenSet) {
+    bar.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="chip ${status.active ? 'chip-ok' : 'chip-warn'}">
+          <span class="dot ${status.active ? 'dot-ok' : 'dot-warn'}"></span>
+          ${status.active ? 'Bot activo' : 'Bot detenido'}
+        </span>
+        <span style="font-size:.8rem;color:var(--muted)">Token: <code>${escHtml(creds.tokenHint)}</code></span>
+        ${creds.users ? `<span style="font-size:.8rem;color:var(--muted)">Usuarios: <code>${escHtml(creds.users)}</code></span>` : '<span style="font-size:.8rem;color:var(--warn)">⚠ Sin restricción de usuarios</span>'}
+      </div>`;
+  } else {
+    bar.innerHTML = '<span class="chip chip-err"><span class="dot dot-err"></span>No configurado</span>';
+  }
+}
+
+async function saveStaffBot() {
+  const adminToken = document.getElementById('sb-token')?.value?.trim();
+  const adminUsers = document.getElementById('sb-users')?.value?.trim();
+  if (!adminToken) { toast('Ingresa el token del Staff Bot', 'err'); return; }
+  const r = await api('/api/staffbot/credentials', {
+    method: 'POST', body: JSON.stringify({ adminToken, adminUsers }),
+  });
+  if (!r.ok) { toast('Error al guardar: ' + (r.error || ''), 'err'); return; }
+  document.getElementById('sb-token').value = '';
+  const r2 = await api('/api/staffbot/start', { method: 'POST' });
+  if (r2.ok) { toast('✅ Staff Bot guardado y activo', 'ok'); loadStaffBotStatus(); }
+  else toast('Guardado, pero no se pudo iniciar: ' + (r2.msg || ''), 'err');
+}
+
+async function stopStaffBot() {
+  await api('/api/staffbot/stop', { method: 'POST' });
+  toast('Staff Bot detenido', 'ok'); loadStaffBotStatus();
+}
+
+// ─── Email & Outreach ──────────────────────────────────────────────────────
+function emailTab(tab) {
+  document.getElementById('email-tab-autoresponder').style.display = tab === 'autoresponder' ? '' : 'none';
+  document.getElementById('email-tab-outreach').style.display      = tab === 'outreach'      ? '' : 'none';
+  ['autoresponder','outreach'].forEach(t => {
+    const btn = document.getElementById('tab-btn-' + t);
+    if (!btn) return;
+    if (t === tab) { btn.className = 'btn btn-sm'; btn.style.background = 'var(--navy)'; btn.style.color = '#fff'; }
+    else           { btn.className = 'btn btn-sm btn-outline'; btn.style.background = ''; btn.style.color = ''; }
+  });
+  if (tab === 'outreach')      { loadOutreachStats(); loadSequences(); loadContactCount(); }
+  if (tab === 'autoresponder') loadEmailSettings();
+}
+
+async function loadEmailSettings() {
+  const d = await api('/api/email/settings');
+  if (d.configured) {
+    const e1 = document.getElementById('em-email');
+    const e2 = document.getElementById('em-sender');
+    if (e1) e1.value = d.email      || '';
+    if (e2) e2.value = d.senderName || '';
+  }
+  updateArStatus(d.autoresponder || false);
+}
+
+function updateArStatus(active) {
+  setHtml('ar-status-chip', active
+    ? '<span class="chip chip-ok"><span class="dot dot-ok"></span>Activo — revisando cada 5 min</span>'
+    : '<span class="chip chip-err"><span class="dot dot-err"></span>Inactivo</span>');
+  const start = document.getElementById('btn-ar-start');
+  const stop  = document.getElementById('btn-ar-stop');
+  if (start) start.disabled = active;
+  if (stop)  stop.disabled  = !active;
+}
+
+async function saveEmailSettings() {
+  const email = document.getElementById('em-email')?.value?.trim();
+  const pass  = document.getElementById('em-pass')?.value?.trim();
+  const name  = document.getElementById('em-sender')?.value?.trim();
+  if (!email) { toast('Ingresa tu dirección de Gmail', 'err'); return; }
+  if (!pass)  { toast('Ingresa el App Password de Google', 'err'); return; }
+  const r = await api('/api/email/settings', { method: 'POST', body: JSON.stringify({ email, appPassword: pass, senderName: name }) });
+  if (r.ok) { toast('✅ Conexión guardada', 'ok'); document.getElementById('em-pass').value = ''; }
+  else toast('Error: ' + (r.error || 'desconocido'), 'err');
+}
+
+async function testEmail() {
+  toast('Enviando correo de prueba...', 'ok');
+  const r = await api('/api/email/test', { method: 'POST' });
+  if (r.ok) toast('✅ Correo de prueba enviado. Revisa tu bandeja de entrada.', 'ok');
+  else toast('❌ ' + (r.error || 'Revisa el email y App Password'), 'err');
+}
+
+async function startAutoresponder() {
+  const r = await api('/api/email/autoresponder/start', { method: 'POST' });
+  if (r.ok) { toast('✅ Auto-responder activado', 'ok'); updateArStatus(true); }
+  else toast('Error: ' + (r.error || ''), 'err');
+}
+
+async function stopAutoresponder() {
+  await api('/api/email/autoresponder/stop', { method: 'POST' });
+  toast('Auto-responder detenido', 'ok'); updateArStatus(false);
+}
+
+async function loadContactCount() {
+  const contacts = await api('/api/outreach/contacts');
+  const el = document.getElementById('contact-count');
+  if (el) el.textContent = Array.isArray(contacts) ? `${contacts.length} contactos en lista` : '';
+}
+
+async function importContacts() {
+  const csv = document.getElementById('csv-input')?.value?.trim();
+  if (!csv) { toast('Pega el CSV primero', 'err'); return; }
+  const r = await api('/api/outreach/contacts', { method: 'POST', body: JSON.stringify({ csv }) });
+  if (r.ok) {
+    toast(`✅ ${r.added} contactos añadidos (total: ${r.total})`, 'ok');
+    document.getElementById('csv-input').value = '';
+    loadContactCount(); loadOutreachStats();
+  } else toast('Error: ' + (r.error || 'formato incorrecto'), 'err');
+}
+
+async function clearContacts() {
+  if (!confirm('¿Eliminar toda la lista de contactos?')) return;
+  await api('/api/outreach/contacts', { method: 'DELETE' });
+  toast('Lista vaciada', 'ok'); loadContactCount(); loadOutreachStats();
+}
+
+async function loadOutreachStats() {
+  const d = await api('/api/outreach/stats');
+  setHtml('ot-contacts',  d.contacts  ?? '—');
+  setHtml('ot-sequences', d.sequences ?? '—');
+  setHtml('ot-active',    d.active    ?? '—');
+  setHtml('ot-sent',      d.sent      ?? '—');
+}
+
+let stepCount = 0;
+
+function toggleNewSeqForm() {
+  const form = document.getElementById('new-seq-form');
+  if (!form) return;
+  const show = form.style.display === 'none';
+  form.style.display = show ? '' : 'none';
+  if (show) {
+    stepCount = 0;
+    document.getElementById('steps-container').innerHTML = '';
+    const sn = document.getElementById('seq-name'); if (sn) sn.value = '';
+    addStep();
+  }
+}
+
+function addStep() {
+  const i = stepCount++;
+  const container = document.getElementById('steps-container');
+  if (!container) return;
+  const div = document.createElement('div');
+  div.id = `step-${i}`;
+  div.style.cssText = 'background:#F9F7F4;border-radius:10px;padding:16px;margin-bottom:10px;border:1px solid var(--border)';
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <strong style="font-size:.85rem">Paso ${i + 1}</strong>
+      ${i > 0 ? `<button class="btn btn-danger btn-sm" onclick="removeStep(${i})">✕ Quitar</button>` : ''}
+    </div>
+    <div style="display:grid;grid-template-columns:100px 1fr;gap:12px;margin-bottom:10px">
+      <div>
+        <label class="form-label">Día de envío</label>
+        <input class="form-input" id="step-${i}-day" type="number" min="0" value="${i * 3}" />
+      </div>
+      <div>
+        <label class="form-label">Asunto (usa {{nombre}} para personalizar)</label>
+        <input class="form-input" id="step-${i}-subject" placeholder="Hola {{nombre}}, te contacto sobre..." />
+      </div>
+    </div>
+    <div>
+      <label class="form-label">Instrucciones para Aria (prompt)</label>
+      <textarea class="form-input" id="step-${i}-prompt" rows="3"
+        placeholder="Redacta un correo de presentación de HotelClaw para un director de hotel. Menciona que es un AI concierge 24/7 para hoteles boutique. Sé directo y conciso, no más de 3 párrafos."></textarea>
+    </div>`;
+  container.appendChild(div);
+}
+
+function removeStep(i) {
+  const el = document.getElementById(`step-${i}`); if (el) el.remove();
+}
+
+async function saveSequence() {
+  const name = document.getElementById('seq-name')?.value?.trim();
+  if (!name) { toast('Ponle un nombre a la secuencia', 'err'); return; }
+  const steps = [];
+  for (let i = 0; i < stepCount; i++) {
+    const dayEl = document.getElementById(`step-${i}-day`);
+    const subEl = document.getElementById(`step-${i}-subject`);
+    const proEl = document.getElementById(`step-${i}-prompt`);
+    if (!dayEl) continue;
+    if (!subEl?.value?.trim() || !proEl?.value?.trim()) {
+      toast(`Completa el asunto e instrucciones del paso ${i + 1}`, 'err'); return;
+    }
+    steps.push({ dayOffset: parseInt(dayEl.value || '0'), subject: subEl.value.trim(), prompt: proEl.value.trim() });
+  }
+  if (!steps.length) { toast('Añade al menos un paso', 'err'); return; }
+  const r = await api('/api/outreach/sequences', { method: 'POST', body: JSON.stringify({ name, steps }) });
+  if (r.ok) { toast('✅ Secuencia creada', 'ok'); toggleNewSeqForm(); loadSequences(); loadOutreachStats(); }
+  else toast('Error: ' + (r.error || ''), 'err');
+}
+
+async function loadSequences() {
+  const seqs = await api('/api/outreach/sequences');
+  const el = document.getElementById('sequences-list');
+  if (!el) return;
+  if (!Array.isArray(seqs) || !seqs.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:.85rem">No hay secuencias. Crea la primera con el botón de arriba.</p>';
+    return;
+  }
+  el.innerHTML = seqs.map(s => `
+    <div style="border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-weight:600">${escHtml(s.name)}</div>
+          <div style="font-size:.78rem;color:var(--muted)">${s.steps?.length || 0} pasos · ${new Date(s.createdAt).toLocaleDateString('es')}</div>
+        </div>
+        <span class="chip ${s.status === 'active' ? 'chip-ok' : 'chip-warn'}">${s.status === 'active' ? '▶ Activa' : '⏸ Pausada'}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${s.status === 'active'
+          ? `<button class="btn btn-outline btn-sm" onclick="stopSequence('${s.id}')">⏹ Pausar</button>`
+          : `<button class="btn btn-gold btn-sm" onclick="startSequence('${s.id}')">▶ Activar</button>`}
+        <button class="btn btn-outline btn-sm" onclick="previewSequence('${s.id}')">👁 Preview con Aria</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSequence('${s.id}')">🗑 Eliminar</button>
+      </div>
+    </div>`).join('');
+}
+
+async function startSequence(id) {
+  const r = await api(`/api/outreach/sequences/${id}/start`, { method: 'POST' });
+  if (r.ok) { toast('✅ Secuencia activada. Se enviarán correos a las 9 AM según el calendario.', 'ok'); loadSequences(); loadOutreachStats(); }
+  else toast('Error: ' + (r.error || ''), 'err');
+}
+
+async function stopSequence(id) {
+  await api(`/api/outreach/sequences/${id}/stop`, { method: 'POST' });
+  toast('Secuencia pausada', 'ok'); loadSequences(); loadOutreachStats();
+}
+
+async function deleteSequence(id) {
+  if (!confirm('¿Eliminar esta secuencia permanentemente?')) return;
+  await api(`/api/outreach/sequences/${id}`, { method: 'DELETE' });
+  toast('Secuencia eliminada', 'ok'); loadSequences(); loadOutreachStats();
+}
+
+async function previewSequence(id) {
+  const box = document.getElementById('preview-box');
+  if (box) {
+    box.style.display = '';
+    setHtml('preview-body', '⏳ Generando con Aria...');
+    setHtml('preview-subject', ''); setHtml('preview-contact', '');
+  }
+  const r = await api(`/api/outreach/sequences/${id}/preview`, { method: 'POST' });
+  if (r.ok) {
+    setHtml('preview-subject', escHtml(r.subject));
+    const pb = document.getElementById('preview-body');
+    if (pb) pb.textContent = r.body;
+    setHtml('preview-contact', escHtml(`${r.contact?.nombre || ''} <${r.contact?.email}>`));
+    box?.scrollIntoView({ behavior: 'smooth' });
+  } else {
+    toast('Error en preview: ' + (r.error || ''), 'err');
+    if (box) box.style.display = 'none';
+  }
+}
+
+// ─── Knowledge Base ────────────────────────────────────────────────────────
+let kbCurrentTab = 'docs';
+
+function kbTab(tab) {
+  kbCurrentTab = tab;
+  ['docs','urls','images'].forEach(t => {
+    const el = document.getElementById('kb-tab-' + t);
+    if (el) el.style.display = t === tab ? '' : 'none';
+    const btn = document.getElementById('kb-tab-btn-' + t);
+    if (!btn) return;
+    if (t === tab) { btn.className = 'btn btn-sm'; btn.style.background = 'var(--navy)'; btn.style.color = '#fff'; }
+    else           { btn.className = 'btn btn-sm btn-outline'; btn.style.background = ''; btn.style.color = ''; }
+  });
+}
+
+async function loadKB() {
+  const docs = await api('/api/kb');
+  renderKBDocs(docs);
+}
+
+function renderKBDocs(docs) {
+  const docsEl   = document.getElementById('kb-docs-content');
+  const urlsEl   = document.getElementById('kb-urls-content');
+  const imagesEl = document.getElementById('kb-images-content');
+  if (!docsEl) return;
+
+  const byType = { doc: [], url: [], image: [] };
+  (Array.isArray(docs) ? docs : []).forEach(d => {
+    const t = d.type || 'doc';
+    if (byType[t]) byType[t].push(d); else byType['doc'].push(d);
+  });
+
+  const fmtSize = b => b >= 1048576 ? (b/1048576).toFixed(1)+' MB' : b >= 1024 ? (b/1024).toFixed(0)+' KB' : b+' B';
+  const fmtDate = s => new Date(s).toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' });
+
+  const renderList = (items, emptyMsg, renderRow) =>
+    items.length ? items.map(renderRow).join('') : `<p style="color:var(--muted);font-size:.85rem">${emptyMsg}</p>`;
+
+  docsEl.innerHTML = renderList(byType.doc, 'No hay documentos. Sube un PDF, DOCX o TXT.', d => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-weight:600;font-size:.875rem">📄 ${escHtml(d.title)}</div>
+        <div style="font-size:.75rem;color:var(--muted)">${d.size ? fmtSize(d.size) + ' · ' : ''}${fmtDate(d.createdAt)}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteKBDoc('${d.id}')">🗑</button>
+    </div>`);
+
+  urlsEl.innerHTML = renderList(byType.url, 'No hay URLs. Agrega la primera arriba.', d => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-weight:600;font-size:.875rem">🔗 ${escHtml(d.title)}</div>
+        <div style="font-size:.75rem;color:var(--muted)">${escHtml(d.url || '')} · ${fmtDate(d.createdAt)}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteKBDoc('${d.id}')">🗑</button>
+    </div>`);
+
+  imagesEl.innerHTML = renderList(byType.image, 'No hay imágenes subidas.', d => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-weight:600;font-size:.875rem">🖼 ${escHtml(d.title)}</div>
+        <div style="font-size:.75rem;color:var(--muted)">${d.size ? fmtSize(d.size) + ' · ' : ''}${fmtDate(d.createdAt)}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteKBDoc('${d.id}')">🗑</button>
+    </div>`);
+}
+
+async function addKBUrl() {
+  const url   = document.getElementById('kb-url-url')?.value?.trim();
+  const title = document.getElementById('kb-url-title')?.value?.trim();
+  const desc  = document.getElementById('kb-url-desc')?.value?.trim();
+  if (!url) { toast('Ingresa una URL', 'err'); return; }
+  const r = await api('/api/kb/url', { method: 'POST', body: JSON.stringify({ url, title, description: desc }) });
+  if (r.ok) {
+    toast(`✅ URL agregada (${r.chunks} fragmentos indexados)`, 'ok');
+    document.getElementById('kb-url-url').value   = '';
+    document.getElementById('kb-url-title').value = '';
+    document.getElementById('kb-url-desc').value  = '';
+    loadKB();
+  } else toast('Error: ' + (r.error || ''), 'err');
+}
+
+async function uploadKBFile(file, _type) {
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('file', file);
+  toast('⏳ Subiendo y procesando...', 'ok');
+  try {
+    const r = await fetch('/api/kb/upload', { method: 'POST', body: formData });
+    const data = await r.json();
+    if (data.ok) {
+      toast(`✅ Archivo subido (${data.chunks} fragmentos indexados)`, 'ok');
+      loadKB();
+    } else toast('Error: ' + (data.error || ''), 'err');
+  } catch (e) { toast('Error de red: ' + e.message, 'err'); }
+}
+
+function kbDropDocs(e) {
+  e.preventDefault();
+  document.getElementById('kb-drop-docs').style.borderColor = 'var(--border)';
+  const file = e.dataTransfer.files[0];
+  if (file) uploadKBFile(file, 'doc');
+}
+
+function kbDropImages(e) {
+  e.preventDefault();
+  document.getElementById('kb-drop-images').style.borderColor = 'var(--border)';
+  const file = e.dataTransfer.files[0];
+  if (file) uploadKBFile(file, 'image');
+}
+
+async function deleteKBDoc(id) {
+  if (!confirm('¿Eliminar este elemento del Knowledge Base?')) return;
+  const r = await api(`/api/kb/${id}`, { method: 'DELETE' });
+  if (r.ok) { toast('Eliminado del KB', 'ok'); loadKB(); }
+  else toast('Error: ' + (r.error || ''), 'err');
+}
+
+async function searchKB() {
+  const q = document.getElementById('kb-search-q')?.value?.trim();
+  if (!q) { toast('Ingresa un término de búsqueda', 'err'); return; }
+  const results = await api(`/api/kb/search?q=${encodeURIComponent(q)}`);
+  const el = document.getElementById('kb-search-results');
+  const list = document.getElementById('kb-search-list');
+  if (el) el.style.display = '';
+  if (!list) return;
+  if (!Array.isArray(results) || !results.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:.85rem">Sin resultados para esa búsqueda.</p>';
+    return;
+  }
+  list.innerHTML = results.map((c, i) => `
+    <div style="background:#F9F7F4;border-radius:10px;padding:14px;margin-bottom:10px">
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px">
+        <strong>${i + 1}.</strong> ${escHtml(c.source)} · score: ${c.score}
+      </div>
+      <div style="font-size:.85rem;line-height:1.6">${escHtml(c.text)}</div>
+    </div>`).join('');
+}
+
+// ─── Auth ──────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const errEl    = document.getElementById('login-err');
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = 'Ingresa email y contraseña'; return; }
+  try {
+    const r = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+    if (!r.ok) { errEl.textContent = r.error || 'Credenciales incorrectas'; return; }
+    if (r.role === 'admin') { window.location.href = '/admin'; return; }
+    document.getElementById('login-overlay').classList.remove('visible');
+    document.getElementById('hotel-ctx-name').textContent = `🏨 ${r.name}`;
+    await bootDashboard();
+  } catch { errEl.textContent = 'Error de conexión con el servidor'; }
+}
+
+async function doLogout() {
+  await api('/api/auth/logout', { method: 'POST' });
+  document.getElementById('login-overlay').classList.add('visible');
+  document.getElementById('hotel-ctx-name').textContent = '';
+  document.getElementById('login-pass').value = '';
+}
+
+// ─── Init ──────────────────────────────────────────────────────────────────
+async function bootDashboard() {
+  await refreshStatus();
+  if (!statusInterval) statusInterval = setInterval(refreshStatus, 30000);
+}
+
+(async function init() {
+  try {
+    const me = await api('/api/auth/me');
+    if (me.role === 'admin') { window.location.href = '/admin'; return; }
+    if (me.role === 'hotel') {
+      document.getElementById('hotel-ctx-name').textContent = `🏨 ${me.name}`;
+      await bootDashboard();
+      return;
+    }
+  } catch {}
+  // No autenticado — mostrar login
+  document.getElementById('login-overlay').classList.add('visible');
+})();
+
+// ─── Servicios del hotel ────────────────────────────────────────────────────
+const SVC_CATEGORIES = {
+  spa: '🧖 Spa & Wellness', restaurant: '🍽️ Restaurante',
+  tour: '🗺️ Tours y Excursiones', transport: '🚗 Transporte',
+  activity: '🏄 Actividades', other: '📌 Otros servicios',
+};
+let svcEditId = null;
+
+async function loadServices() {
+  const list = await api('/api/services');
+  const el = document.getElementById('svc-list');
+  if (!list || list.error) { el.innerHTML = `<p style="color:var(--red)">${list?.error || 'Error al cargar'}</p>`; return; }
+  if (!list.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+      <div style="font-size:2.5rem;margin-bottom:12px">🏨</div>
+      <div style="font-weight:600;margin-bottom:6px">No hay servicios todavía</div>
+      <div style="font-size:.85rem">Agrega el primer servicio y Aria empezará a recomendarlo a los huéspedes.</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = list.map(s => `
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span style="font-size:1rem;font-weight:700">${s.name}</span>
+            <span style="background:var(--light);border-radius:20px;padding:2px 10px;font-size:.75rem;color:var(--navy)">${SVC_CATEGORIES[s.category] || s.category}</span>
+            <span style="font-size:.75rem;color:${s.active !== false ? 'var(--green)' : 'var(--muted)'}">${s.active !== false ? '● Activo' : '○ Inactivo'}</span>
+          </div>
+          ${s.description ? `<p style="font-size:.85rem;color:var(--text);margin-bottom:4px">${s.description}</p>` : ''}
+          <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted);margin-top:4px">
+            ${s.price    ? `<span>💰 ${s.price}</span>` : ''}
+            ${s.schedule ? `<span>🕐 ${s.schedule}</span>` : ''}
+            ${s.contact  ? `<span>📞 ${s.contact}</span>` : ''}
+          </div>
+          ${s.images?.length ? `
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+              ${s.images.map(img => `
+                <div style="position:relative">
+                  <img src="/api/services/image/${img.filename}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" />
+                  <button onclick="deleteSvcImage('${s.id}','${img.filename}')"
+                    style="position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;cursor:pointer;line-height:18px;text-align:center">✕</button>
+                </div>`).join('')}
+            </div>` : ''}
+          <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+            <label class="btn btn-outline btn-sm" style="cursor:pointer">
+              📷 Subir imagen
+              <input type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none" onchange="uploadSvcImage('${s.id}', this)">
+            </label>
+            <span style="font-size:.75rem;color:var(--muted)">${s.images?.length || 0} imagen(es)</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          <button class="btn btn-outline btn-sm" onclick="editService('${s.id}')">✏️ Editar</button>
+          <button class="btn btn-sm" style="background:${s.active !== false ? '#FFF3CD' : '#D4EDDA'};color:#333;border:1px solid var(--border)"
+            onclick="toggleService('${s.id}', ${s.active !== false})">${s.active !== false ? 'Desactivar' : 'Activar'}</button>
+          <button class="btn btn-sm" style="background:#FFF0F0;color:var(--red);border:1px solid #FFCCCC"
+            onclick="deleteService('${s.id}', '${s.name.replace(/'/g,"\\'")}')">🗑️ Eliminar</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function openSvcModal(svc = null) {
+  svcEditId = svc ? svc.id : null;
+  document.getElementById('svc-modal-title').textContent = svc ? 'Editar servicio' : 'Nuevo servicio';
+  document.getElementById('svc-name').value     = svc?.name        || '';
+  document.getElementById('svc-category').value = svc?.category    || 'other';
+  document.getElementById('svc-desc').value     = svc?.description || '';
+  document.getElementById('svc-price').value    = svc?.price       || '';
+  document.getElementById('svc-schedule').value = svc?.schedule    || '';
+  document.getElementById('svc-contact').value  = svc?.contact     || '';
+  document.getElementById('svc-includes').value = svc?.includes    || '';
+  document.getElementById('svc-notes').value    = svc?.notes       || '';
+  document.getElementById('svc-modal').style.display = 'block';
+}
+function closeSvcModal() { document.getElementById('svc-modal').style.display = 'none'; svcEditId = null; }
+
+async function saveService() {
+  const body = {
+    name:        document.getElementById('svc-name').value.trim(),
+    category:    document.getElementById('svc-category').value,
+    description: document.getElementById('svc-desc').value.trim(),
+    price:       document.getElementById('svc-price').value.trim(),
+    schedule:    document.getElementById('svc-schedule').value.trim(),
+    contact:     document.getElementById('svc-contact').value.trim(),
+    includes:    document.getElementById('svc-includes').value.trim(),
+    notes:       document.getElementById('svc-notes').value.trim(),
+  };
+  if (!body.name) { toast('El nombre es obligatorio', 'err'); return; }
+  const btn = document.getElementById('svc-save-btn');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  const url  = svcEditId ? `/api/services/${svcEditId}` : '/api/services';
+  const meth = svcEditId ? 'PUT' : 'POST';
+  const r = await api(url, { method: meth, body: JSON.stringify(body) });
+  btn.disabled = false; btn.textContent = 'Guardar servicio';
+  if (r.ok) { toast(svcEditId ? 'Servicio actualizado' : 'Servicio creado'); closeSvcModal(); loadServices(); }
+  else toast(r.error || 'Error al guardar', 'err');
+}
+
+async function editService(id) {
+  const list = await api('/api/services');
+  const svc = list.find(s => s.id === id);
+  if (svc) openSvcModal(svc);
+}
+
+async function toggleService(id, currentlyActive) {
+  const r = await api(`/api/services/${id}`, { method: 'PUT', body: JSON.stringify({ active: !currentlyActive }) });
+  if (r.ok) { toast(currentlyActive ? 'Servicio desactivado' : 'Servicio activado'); loadServices(); }
+  else toast(r.error || 'Error', 'err');
+}
+
+async function deleteService(id, name) {
+  if (!confirm(`¿Eliminar el servicio "${name}"? Se borrarán también sus imágenes.`)) return;
+  const r = await api(`/api/services/${id}`, { method: 'DELETE' });
+  if (r.ok) { toast('Servicio eliminado'); loadServices(); }
+  else toast(r.error || 'Error', 'err');
+}
+
+async function uploadSvcImage(svcId, input) {
+  const file = input.files[0];
+  if (!file) return;
+  toast('Subiendo imagen y analizando con IA…');
+  const fd = new FormData();
+  fd.append('file', file);
+  const r = await fetch(`/api/services/${svcId}/image`, { method: 'POST', body: fd });
+  const data = await r.json();
+  if (data.ok) { toast('Imagen agregada' + (data.description ? ' — Aria ya la conoce ✓' : '')); loadServices(); }
+  else toast(data.error || 'Error al subir imagen', 'err');
+  input.value = '';
+}
+
+async function deleteSvcImage(svcId, filename) {
+  if (!confirm('¿Eliminar esta imagen?')) return;
+  const r = await api(`/api/services/${svcId}/image/${filename}`, { method: 'DELETE' });
+  if (r.ok) { toast('Imagen eliminada'); loadServices(); }
+  else toast(r.error || 'Error', 'err');
+}
+
+// ─── Tickets ────────────────────────────────────────────────────────────────
+const TKT_PRIORITY = { urgent:'🔴 Urgente', high:'🟠 Alto', normal:'🟡 Normal', low:'🟢 Bajo' };
+const TKT_STATUS   = { pending:'⏳ Pendiente', in_progress:'🔧 En proceso', resolved:'✅ Resuelto' };
+let tktCurrentFilter = 'open';
+
+function ticketFilter(f) {
+  tktCurrentFilter = f;
+  ['open','all','resolved'].forEach(k => {
+    const btn = document.getElementById('tkt-filter-' + k);
+    if (btn) { btn.style.background = k === f ? 'var(--navy)' : ''; btn.style.color = k === f ? '#fff' : ''; btn.classList.toggle('btn-outline', k !== f); }
+  });
+  loadTickets();
+}
+
+async function loadTickets() {
+  const qs = tktCurrentFilter === 'resolved' ? '?status=resolved' : tktCurrentFilter === 'open' ? '?status=pending&status=in_progress' : '';
+  let tickets = await api('/api/tickets');
+  if (!Array.isArray(tickets)) { document.getElementById('tkt-list').innerHTML = `<p style="color:var(--red)">${tickets?.error||'Error'}</p>`; return; }
+  if (tktCurrentFilter === 'open')     tickets = tickets.filter(t => t.status !== 'resolved');
+  if (tktCurrentFilter === 'resolved') tickets = tickets.filter(t => t.status === 'resolved');
+  const el = document.getElementById('tkt-list');
+  if (!tickets.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+      <div style="font-size:2.5rem;margin-bottom:12px">${tktCurrentFilter==='resolved'?'✅':'🎫'}</div>
+      <div style="font-weight:600">${tktCurrentFilter==='resolved'?'Sin tickets resueltos aún':'Sin tickets abiertos — ¡todo en orden!'}</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = tickets.map(t => {
+    const priColor = {urgent:'#FF4444',high:'#FF8C00',normal:'#F5A623',low:'#4CAF50'}[t.priority]||'#aaa';
+    const isOpen = t.status !== 'resolved';
+    return `<div class="card" style="margin-bottom:12px;border-left:4px solid ${priColor}">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-weight:700;font-size:.95rem">[${t.id}]</span>
+            ${t.room ? `<span style="background:#EEF2FF;border-radius:4px;padding:1px 8px;font-size:.78rem">Hab. ${t.room}</span>` : ''}
+            ${t.guestName ? `<span style="font-size:.82rem;color:var(--muted)">${t.guestName}</span>` : ''}
+            <span style="font-size:.78rem;padding:2px 8px;border-radius:12px;background:${priColor}22;color:${priColor}">${TKT_PRIORITY[t.priority]||t.priority}</span>
+            <span style="font-size:.78rem;color:var(--muted)">${TKT_STATUS[t.status]||t.status}</span>
+          </div>
+          <p style="font-size:.88rem;margin-bottom:4px">${t.description}</p>
+          ${t.notes ? `<p style="font-size:.78rem;color:var(--muted);font-style:italic">Nota: ${t.notes}</p>` : ''}
+          <div style="font-size:.75rem;color:var(--muted);margin-top:4px">${new Date(t.createdAt).toLocaleString('es')}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          ${isOpen ? `
+          <select onchange="changeTktStatus('${t.id}', this.value)" class="form-input" style="font-size:.78rem;padding:4px 8px;width:130px">
+            <option value="pending"  ${t.status==='pending'?'selected':''}>⏳ Pendiente</option>
+            <option value="in_progress" ${t.status==='in_progress'?'selected':''}>🔧 En proceso</option>
+            <option value="resolved">✅ Resolver</option>
+          </select>` : ''}
+          <button class="btn btn-sm" style="background:#FFF0F0;color:var(--red);border:1px solid #FFCCCC;font-size:.75rem"
+            onclick="deleteTicket('${t.id}')">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function changeTktStatus(id, status) {
+  const note = status === 'resolved' ? prompt('Nota de resolución (opcional):') || '' : '';
+  const r = await api(`/api/tickets/${id}`, { method: 'PUT', body: JSON.stringify({ status, notes: note }) });
+  if (r.ok) { toast(status === 'resolved' ? '✅ Ticket resuelto' : 'Estado actualizado'); loadTickets(); }
+  else toast(r.error || 'Error', 'err');
+}
+async function deleteTicket(id) {
+  if (!confirm('¿Eliminar este ticket?')) return;
+  const r = await api(`/api/tickets/${id}`, { method: 'DELETE' });
+  if (r.ok) { toast('Ticket eliminado'); loadTickets(); }
+  else toast(r.error || 'Error', 'err');
+}
+function openTktModal() { document.getElementById('tkt-modal').style.display = 'block'; }
+function closeTktModal() {
+  document.getElementById('tkt-modal').style.display = 'none';
+  ['tkt-room','tkt-guest','tkt-desc'].forEach(id => document.getElementById(id).value = '');
+}
+async function saveTicket() {
+  const body = {
+    room: document.getElementById('tkt-room').value.trim(),
+    guestName: document.getElementById('tkt-guest').value.trim(),
+    description: document.getElementById('tkt-desc').value.trim(),
+    priority: document.getElementById('tkt-priority').value,
+    status: document.getElementById('tkt-status').value,
+  };
+  if (!body.description) { toast('La descripción es obligatoria', 'err'); return; }
+  const r = await api('/api/tickets', { method: 'POST', body: JSON.stringify(body) });
+  if (r.ok) { toast('Ticket creado'); closeTktModal(); loadTickets(); }
+  else toast(r.error || 'Error', 'err');
+}
+
+// ─── Huéspedes ──────────────────────────────────────────────────────────────
+const VISIT_ICONS = { anniversary:'💍', honeymoon:'🌙', birthday:'🎂', family:'👨‍👩‍👧', business:'💼', leisure:'🌴', auto:'🤖' };
+const VISIT_NAMES = { anniversary:'Aniversario', honeymoon:'Luna de miel', birthday:'Cumpleaños', family:'Familia', business:'Negocios', leisure:'Vacaciones' };
+let guestEditId = null;
+
+let guestHistoryVisible = false;
+
+function toggleGuestHistory() {
+  guestHistoryVisible = !guestHistoryVisible;
+  const sec = document.getElementById('guest-history-section');
+  const btn = document.getElementById('btn-toggle-history');
+  if (sec) sec.style.display = guestHistoryVisible ? '' : 'none';
+  if (btn) btn.textContent = guestHistoryVisible ? '📜 Ocultar historial' : '📜 Ver historial';
+  if (guestHistoryVisible) loadGuestHistory();
+}
+
+async function loadGuestHistory() {
+  const past = await api('/api/guests/history');
+  const el   = document.getElementById('guest-history-list');
+  if (!el) return;
+  if (!Array.isArray(past) || !past.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:.85rem">No hay estadías pasadas registradas.</p>';
+    return;
+  }
+  el.innerHTML = past.map(g => {
+    const reviewBadge = g.reviewStatus === 'positive' ? '<span class="chip" style="background:#D1FAE5;color:#065F46;font-size:.72rem">🟢 Reseña positiva</span>'
+      : g.reviewStatus === 'negative' ? '<span class="chip" style="background:#FEE2E2;color:#991B1B;font-size:.72rem">🔴 Reseña negativa</span>'
+      : g.reviewStatus === 'sent' ? '<span class="chip chip-warn" style="font-size:.72rem">⭐ Solicitada</span>'
+      : '';
+    const returningBadge = g.isReturning ? `<span class="chip" style="background:#EEF2FF;color:#3730A3;font-size:.72rem">🔄 Frecuente ${g.returnCount}x</span>` : '';
+    return `<div class="card" style="margin-bottom:12px;opacity:.75">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="font-size:1.4rem;line-height:1">${VISIT_ICONS[g.type]||'🌴'}</div>
+        <div style="flex:1">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-weight:700">${g.name}</span>
+            ${g.room ? `<span style="background:#EEF2FF;border-radius:4px;padding:1px 8px;font-size:.78rem">Hab. ${g.room}</span>` : ''}
+            ${returningBadge}
+            ${reviewBadge}
+          </div>
+          <div style="font-size:.78rem;color:var(--muted)">${VISIT_NAMES[g.type]||g.type} · ${g.checkin} → ${g.checkout}</div>
+          ${g.notes ? `<div style="font-size:.78rem;color:var(--text);font-style:italic;margin-top:2px">${g.notes}</div>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          ${!g.reviewStatus || g.reviewStatus === 'sent' ? `
+          <button class="btn btn-sm" style="background:#FEF3C7;color:#92400E;border:1px solid #FDE68A" onclick="triggerReviewRequest('${g.id}','${g.name.replace(/'/g,"\\'")}')">⭐ ${g.reviewStatus === 'sent' ? 'Registrar respuesta' : 'Pedir reseña'}</button>
+          ` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function loadGuests() {
+  const guests = await api('/api/guests');
+  const el = document.getElementById('guest-list');
+  if (!Array.isArray(guests)) { el.innerHTML = `<p style="color:var(--red)">${guests?.error||'Error'}</p>`; return; }
+  const today = new Date().toISOString().split('T')[0];
+  const active = guests.filter(g => g.checkout >= today);
+  if (!active.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+      <div style="font-size:2.5rem;margin-bottom:12px">👥</div>
+      <div style="font-weight:600;margin-bottom:6px">No hay huéspedes activos</div>
+      <div style="font-size:.85rem">Agrega huéspedes para activar el pre check-in, pulso de satisfacción y el upselling.</div>
+    </div>`;
+    return;
+  }
+  const sorted = [...active].sort((a,b) => a.checkin.localeCompare(b.checkin));
+  el.innerHTML = sorted.map(g => {
+    const inHouse = g.checkin <= today && g.checkout > today;
+    const statusColor = inHouse ? 'var(--ok)' : '#3B82F6';
+    const statusLabel = inHouse ? '🏠 En el hotel' : '✈️ Por llegar';
+    const pulseIcon = {null:'',sent:'💬',positive:'⭐',negative:'🚨'}[g.pulseStatus] || '';
+    const returningBadge = g.isReturning ? `<span style="background:#EEF2FF;border-radius:4px;padding:1px 8px;font-size:.72rem;color:#3730A3">🔄 Frecuente ${g.returnCount}x</span>` : '';
+    const canPrecheckin = !g.precheckinSent;
+    return `<div class="card" style="margin-bottom:14px">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="font-size:1.8rem;line-height:1">${VISIT_ICONS[g.type]||'🌴'}</div>
+        <div style="flex:1">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-weight:700">${g.name}</span>
+            ${g.room ? `<span style="background:#EEF2FF;border-radius:4px;padding:1px 8px;font-size:.78rem">Hab. ${g.room}</span>` : ''}
+            <span style="font-size:.78rem;color:${statusColor}">${statusLabel}</span>
+            ${returningBadge}
+            ${pulseIcon ? `<span title="Pulso: ${g.pulseStatus}">${pulseIcon}</span>` : ''}
+            ${g.upsellSent ? '<span title="Upsell enviado">🎁</span>' : ''}
+            ${g.precheckinSent ? '<span title="Pre check-in enviado" style="font-size:.75rem">✈️✓</span>' : ''}
+          </div>
+          <div style="font-size:.82rem;color:var(--muted);margin-bottom:4px">
+            ${VISIT_NAMES[g.type]||g.type} · ${g.checkin} → ${g.checkout} · ${g.channel}
+          </div>
+          ${g.notes ? `<div style="font-size:.8rem;color:var(--text);font-style:italic">${g.notes}</div>` : ''}
+          ${g.isReturning && g.prevNotes ? `<div style="font-size:.78rem;color:#7C3AED;margin-top:4px">🔄 Nota visita anterior: ${g.prevNotes}</div>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          ${canPrecheckin ? `<button class="btn btn-sm" style="background:#E0F2FE;color:#0369A1;border:1px solid #BAE6FD" onclick="triggerPrecheckin('${g.id}','${g.name.replace(/'/g,"\\'")}')">✈️ Pre Check-in</button>` : ''}
+          <button class="btn btn-sm" style="background:#F0FFF4;color:#2D7D46;border:1px solid #C6E8D0" onclick="triggerPulse('${g.id}','${g.name.replace(/'/g,"\\'")}')">💬 Pulso</button>
+          <button class="btn btn-sm" style="background:#FFF8E7;color:#856404;border:1px solid #FFE69C" onclick="triggerUpsell('${g.id}','${g.name.replace(/'/g,"\\'")}')">🎁 Upsell</button>
+          <button class="btn btn-sm" style="background:#FFF0F0;color:var(--err);border:1px solid #FFCCCC" onclick="deleteGuest('${g.id}','${g.name.replace(/'/g,"\\'")}')">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openGuestModal(g = null) {
+  guestEditId = g ? g.id : null;
+  document.getElementById('guest-modal-title').textContent = g ? 'Editar huésped' : 'Nuevo huésped';
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('g-name').value    = g?.name     || '';
+  document.getElementById('g-room').value    = g?.room     || '';
+  document.getElementById('g-channel').value = g?.channel  || 'whatsapp';
+  document.getElementById('g-checkin').value = g?.checkin  || today;
+  document.getElementById('g-checkout').value= g?.checkout || '';
+  document.getElementById('g-type').value    = g?.type     || 'auto';
+  document.getElementById('g-notes').value   = g?.notes    || '';
+  document.getElementById('guest-modal').style.display = 'block';
+}
+function closeGuestModal() { document.getElementById('guest-modal').style.display = 'none'; guestEditId = null; }
+
+async function saveGuest() {
+  const body = {
+    name:     document.getElementById('g-name').value.trim(),
+    room:     document.getElementById('g-room').value.trim(),
+    channel:  document.getElementById('g-channel').value,
+    checkin:  document.getElementById('g-checkin').value,
+    checkout: document.getElementById('g-checkout').value,
+    type:     document.getElementById('g-type').value,
+    notes:    document.getElementById('g-notes').value.trim(),
+  };
+  if (!body.name || !body.checkin || !body.checkout) { toast('Nombre, check-in y check-out son obligatorios', 'err'); return; }
+  const btn = document.getElementById('g-save-btn');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  const url  = guestEditId ? `/api/guests/${guestEditId}` : '/api/guests';
+  const meth = guestEditId ? 'PUT' : 'POST';
+  const r = await api(url, { method: meth, body: JSON.stringify(body) });
+  btn.disabled = false; btn.textContent = 'Guardar';
+  if (r.ok) { toast(guestEditId ? 'Huésped actualizado' : 'Huésped registrado'); closeGuestModal(); loadGuests(); }
+  else toast(r.error || 'Error', 'err');
+}
+
+async function triggerPulse(id, name) {
+  if (!confirm(`¿Generar mensaje de satisfacción para ${name}?`)) return;
+  toast('Generando mensaje con Aria…');
+  const r = await api(`/api/guests/${id}/pulse`, { method: 'POST', body: '{}' });
+  if (r.ok) {
+    document.getElementById('gmp-title').textContent = `💬 Pulso de satisfacción — ${name}`;
+    document.getElementById('gmp-msg').textContent   = r.message;
+    document.getElementById('guest-msg-panel').style.display = 'block';
+    loadGuests();
+  } else toast(r.error || 'Error al generar', 'err');
+}
+
+async function triggerUpsell(id, name) {
+  if (!confirm(`¿Generar oferta de upselling para ${name}?`)) return;
+  toast('Generando oferta con Aria…');
+  const r = await api(`/api/guests/${id}/upsell`, { method: 'POST', body: '{}' });
+  if (r.ok) {
+    document.getElementById('gmp-title').textContent = `🎁 Oferta personalizada — ${name}`;
+    document.getElementById('gmp-msg').textContent   = r.message;
+    document.getElementById('guest-msg-panel').style.display = 'block';
+    loadGuests();
+  } else toast(r.error || 'Error al generar', 'err');
+}
+
+async function deleteGuest(id, name) {
+  if (!confirm(`¿Eliminar a ${name} de la lista de huéspedes?`)) return;
+  const r = await api(`/api/guests/${id}`, { method: 'DELETE' });
+  if (r.ok) { toast('Huésped eliminado'); loadGuests(); }
+  else toast(r.error || 'Error', 'err');
+}
+
+async function triggerPrecheckin(id, name) {
+  if (!confirm(`¿Generar mensaje de pre check-in para ${name}?`)) return;
+  toast('Generando mensaje con Aria…');
+  const r = await api(`/api/guests/${id}/precheckin`, { method: 'POST', body: '{}' });
+  if (r.ok) {
+    document.getElementById('gmp-title').textContent = `✈️ Pre Check-in — ${name}`;
+    document.getElementById('gmp-msg').textContent   = r.message;
+    document.getElementById('guest-msg-panel').style.display = 'block';
+    loadGuests();
+  } else toast(r.error || 'Error al generar', 'err');
+}
+
+async function triggerReviewRequest(id, name) {
+  // If review already sent, show response panel
+  const guests = await api('/api/guests/history');
+  const g = Array.isArray(guests) ? guests.find(x => x.id === id) : null;
+  if (g?.reviewStatus === 'sent') {
+    showReviewResponsePanel(id, name);
+    return;
+  }
+  if (!confirm(`¿Generar solicitud de reseña para ${name}?`)) return;
+  toast('Generando mensaje con Aria…');
+  const r = await api(`/api/guests/${id}/review-request`, { method: 'POST', body: '{}' });
+  if (r.ok) {
+    document.getElementById('gmp-title').textContent = `⭐ Solicitud de reseña — ${name}`;
+    document.getElementById('gmp-msg').textContent   = r.message;
+    document.getElementById('guest-msg-panel').style.display = 'block';
+    loadGuestHistory();
+  } else toast(r.error || 'Error al generar', 'err');
+}
+
+function showReviewResponsePanel(id, name) {
+  document.getElementById('rrp-title').textContent = `¿Cómo fue la experiencia de ${name}?`;
+  document.getElementById('rrp-guest-id').value    = id;
+  document.getElementById('rrp-feedback').value    = '';
+  document.getElementById('rrp-result').innerHTML  = '';
+  document.getElementById('review-response-panel').style.display = 'block';
+}
+
+async function recordReviewResponse(sentiment) {
+  const id       = document.getElementById('rrp-guest-id').value;
+  const feedback = document.getElementById('rrp-feedback').value.trim();
+  if (!id) { toast('Error: sin huésped seleccionado', 'err'); return; }
+  const r = await api(`/api/guests/${id}/review-response`, {
+    method: 'POST', body: JSON.stringify({ sentiment, feedback }),
+  });
+  if (!r.ok) { toast(r.error || 'Error', 'err'); return; }
+  const resultEl = document.getElementById('rrp-result');
+  if (sentiment === 'positive' && (r.googleReviewUrl || r.bookingReviewUrl)) {
+    let html = '<div style="padding:12px;background:#D1FAE5;border-radius:8px;color:#065F46">';
+    html += '✅ <strong>¡Genial!</strong> Envía estos links al huésped para que deje su reseña:<br/><br/>';
+    if (r.googleReviewUrl) html += `<a href="${r.googleReviewUrl}" target="_blank" style="color:#065F46;display:block">⭐ Google Reviews →</a>`;
+    if (r.bookingReviewUrl) html += `<a href="${r.bookingReviewUrl}" target="_blank" style="color:#065F46;display:block">📋 Booking.com →</a>`;
+    html += '</div>';
+    resultEl.innerHTML = html;
+    toast('✅ Reseña positiva registrada');
+  } else if (sentiment === 'negative') {
+    resultEl.innerHTML = '<div style="padding:12px;background:#FEE2E2;border-radius:8px;color:#991B1B">🔴 Queja registrada y alerta enviada al equipo por Telegram.</div>';
+    toast('Queja escalada al equipo', 'ok');
+  } else {
+    resultEl.innerHTML = '<div style="padding:12px;background:#F9F7F4;border-radius:8px">✅ Respuesta registrada.</div>';
+    toast('Respuesta guardada');
+  }
+  loadGuestHistory();
+}
+
+// ─── Menú Digital ────────────────────────────────────────────────────────────
+const MENU_CAT_LABELS = {
+  entrada: '🥗 Entradas', principal: '🍽️ Plato Principal', postre: '🍮 Postre',
+  bebida: '🍹 Bebida', especial: '⭐ Especial del día', otro: '📌 Otros',
+};
+let menuEditId = null;
+
+async function loadMenuQR() {
+  const r = await api('/api/menu/qr');
+  if (!r.ok) return;
+  const img  = document.getElementById('menu-qr-img');
+  const link = document.getElementById('menu-qr-download');
+  const url  = document.getElementById('menu-url');
+  if (img)  img.src  = r.qrUrl;
+  if (link) link.href = r.qrUrl;
+  if (url)  url.textContent = r.menuUrl;
+}
+
+async function loadMenu() {
+  const items = await api('/api/menu');
+  const el = document.getElementById('menu-list');
+  if (!el) return;
+  if (!Array.isArray(items) || !items.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+      <div style="font-size:2.5rem;margin-bottom:12px">🍽️</div>
+      <div style="font-weight:600;margin-bottom:6px">Menú vacío</div>
+      <div style="font-size:.85rem">Agrega el primer plato con el botón de arriba.</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = items.map(item => {
+    const catLabel = MENU_CAT_LABELS[item.category] || item.category || 'Otros';
+    const availColor = item.available !== false ? 'var(--ok)' : 'var(--muted)';
+    const thumbs = (item.images || []).map(img =>
+      `<div style="position:relative;display:inline-block">
+        <img src="/api/menu/image/${img.filename}" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" />
+        <button onclick="deleteMenuImage('${item.id}','${img.filename}')"
+          style="position:absolute;top:-4px;right:-4px;background:var(--err);color:#fff;border:none;border-radius:50%;width:16px;height:16px;font-size:.6rem;cursor:pointer;line-height:16px;text-align:center">✕</button>
+      </div>`
+    ).join('');
+    return `<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-weight:700">${escHtml(item.name)}</span>
+            <span style="background:#F3F4F6;border-radius:4px;padding:1px 8px;font-size:.75rem">${catLabel}</span>
+            ${item.price ? `<span style="font-weight:600;color:var(--gold)">${escHtml(item.price)}</span>` : ''}
+            <span style="font-size:.75rem;color:${availColor}">${item.available !== false ? '● Disponible' : '○ No disponible'}</span>
+          </div>
+          ${item.description ? `<div style="font-size:.85rem;color:var(--text);margin-bottom:4px">${escHtml(item.description)}</div>` : ''}
+          ${item.allergens ? `<div style="font-size:.75rem;color:var(--muted)">⚠️ ${escHtml(item.allergens)}</div>` : ''}
+          ${thumbs ? `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${thumbs}</div>` : ''}
+          <div style="margin-top:8px">
+            <label class="btn btn-outline btn-sm" style="cursor:pointer">
+              📷 Subir foto
+              <input type="file" accept=".jpg,.jpeg,.png,.webp" style="display:none" onchange="uploadMenuImage('${item.id}', this)">
+            </label>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          <button class="btn btn-outline btn-sm" onclick="editMenuItem('${item.id}')">✏️ Editar</button>
+          <button class="btn btn-sm" style="background:${item.available !== false ? '#FFF3CD' : '#D4EDDA'};color:#333;border:1px solid var(--border)"
+            onclick="toggleMenuItem('${item.id}', ${item.available !== false})">${item.available !== false ? 'Pausar' : 'Activar'}</button>
+          <button class="btn btn-sm" style="background:#FFF0F0;color:var(--err);border:1px solid #FFCCCC"
+            onclick="deleteMenuItem('${item.id}','${item.name.replace(/'/g,"\\'")}')">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openMenuModal(item = null) {
+  menuEditId = item ? item.id : null;
+  document.getElementById('menu-modal-title').textContent = item ? 'Editar plato' : 'Nuevo plato';
+  document.getElementById('menu-name').value      = item?.name        || '';
+  document.getElementById('menu-category').value  = item?.category    || 'principal';
+  document.getElementById('menu-price').value     = item?.price       || '';
+  document.getElementById('menu-desc').value      = item?.description || '';
+  document.getElementById('menu-allergens').value = item?.allergens   || '';
+  document.getElementById('menu-modal').style.display = 'block';
+}
+function closeMenuModal() { document.getElementById('menu-modal').style.display = 'none'; menuEditId = null; }
+
+async function saveMenuItem() {
+  const body = {
+    name:        document.getElementById('menu-name').value.trim(),
+    category:    document.getElementById('menu-category').value,
+    description: document.getElementById('menu-desc').value.trim(),
+    price:       document.getElementById('menu-price').value.trim(),
+    allergens:   document.getElementById('menu-allergens').value.trim(),
+  };
+  if (!body.name) { toast('El nombre es obligatorio', 'err'); return; }
+  const btn  = document.getElementById('menu-save-btn');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  const url  = menuEditId ? `/api/menu/${menuEditId}` : '/api/menu';
+  const meth = menuEditId ? 'PUT' : 'POST';
+  const r    = await api(url, { method: meth, body: JSON.stringify(body) });
+  btn.disabled = false; btn.textContent = 'Guardar';
+  if (r.ok) { toast(menuEditId ? 'Plato actualizado' : 'Plato agregado'); closeMenuModal(); loadMenu(); }
+  else toast(r.error || 'Error', 'err');
+}
+
+async function editMenuItem(id) {
+  const items = await api('/api/menu');
+  const item  = Array.isArray(items) ? items.find(i => i.id === id) : null;
+  if (item) openMenuModal(item);
+}
+
+async function toggleMenuItem(id, currentlyActive) {
+  const r = await api(`/api/menu/${id}`, { method: 'PUT', body: JSON.stringify({ available: !currentlyActive }) });
+  if (r.ok) { toast(currentlyActive ? 'Plato pausado' : 'Plato activado'); loadMenu(); }
+  else toast(r.error || 'Error', 'err');
+}
+
+async function deleteMenuItem(id, name) {
+  if (!confirm(`¿Eliminar "${name}" del menú?`)) return;
+  const r = await api(`/api/menu/${id}`, { method: 'DELETE' });
+  if (r.ok) { toast('Plato eliminado'); loadMenu(); }
+  else toast(r.error || 'Error', 'err');
+}
+
+async function uploadMenuImage(itemId, input) {
+  const file = input.files[0];
+  if (!file) return;
+  toast('Subiendo imagen…');
+  const fd = new FormData();
+  fd.append('file', file);
+  const r = await fetch(`/api/menu/${itemId}/image`, { method: 'POST', body: fd });
+  const data = await r.json();
+  if (data.ok) { toast('Imagen agregada'); loadMenu(); }
+  else toast(data.error || 'Error al subir', 'err');
+  input.value = '';
+}
+
+async function deleteMenuImage(itemId, filename) {
+  if (!confirm('¿Eliminar esta imagen?')) return;
+  const r = await api(`/api/menu/${itemId}/image/${filename}`, { method: 'DELETE' });
+  if (r.ok) { toast('Imagen eliminada'); loadMenu(); }
+  else toast(r.error || 'Error', 'err');
+}
+
+// ─── Habitaciones ─────────────────────────────────────────────────────────────
+let roomEditId = null;
+const ROOM_STATUS_CFG = {
+  libre:         { emoji: '🟢', label: 'Libre',          bg: '#D1FAE5', color: '#065F46', border: '#A7F3D0' },
+  ocupada:       { emoji: '🔴', label: 'Ocupada',        bg: '#FEE2E2', color: '#991B1B', border: '#FECACA' },
+  limpieza:      { emoji: '🧹', label: 'Limpieza',       bg: '#FEF3C7', color: '#92400E', border: '#FDE68A' },
+  mantenimiento: { emoji: '🔧', label: 'Mantenimiento',  bg: '#EDE9FE', color: '#5B21B6', border: '#DDD6FE' },
+};
+const ROOM_TYPE_LABELS = { individual: 'Individual', doble: 'Doble', suite: 'Suite', familiar: 'Familiar', otro: 'Otro' };
+
+async function loadRooms() {
+  const rooms = await api('/api/rooms');
+  const board = document.getElementById('rooms-board');
+  if (!rooms || rooms.error) { board.innerHTML = `<p style="color:var(--err)">${rooms?.error || 'Error'}</p>`; return; }
+  if (!rooms.length) {
+    board.innerHTML = `<div class="card" style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">
+      <div style="font-size:2rem;margin-bottom:12px">🏨</div>
+      <p style="font-size:.9rem">No hay habitaciones. Agrega la primera.</p>
+    </div>`;
+    return;
+  }
+  // Group by status
+  const groups = { libre: [], ocupada: [], limpieza: [], mantenimiento: [] };
+  for (const r of rooms) (groups[r.status] || groups.libre).push(r);
+  board.innerHTML = Object.entries(groups).map(([status, list]) => {
+    const cfg = ROOM_STATUS_CFG[status];
+    const cards = list.map(r => `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-weight:700;font-size:1rem">Hab. ${r.number}</span>
+          <div style="display:flex;gap:6px">
+            <button onclick="editRoom('${r.id}')" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.9rem" title="Editar">✏️</button>
+            <button onclick="deleteRoom('${r.id}','${r.number}')" style="background:none;border:none;cursor:pointer;color:var(--err);font-size:.9rem" title="Eliminar">🗑️</button>
+          </div>
+        </div>
+        <div style="font-size:.78rem;color:var(--muted)">${ROOM_TYPE_LABELS[r.type] || r.type}${r.floor ? ` · Piso ${r.floor}` : ''}</div>
+        ${r.notes ? `<div style="font-size:.76rem;color:var(--muted);margin-top:4px;font-style:italic">${r.notes}</div>` : ''}
+        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px">
+          ${Object.keys(ROOM_STATUS_CFG).filter(s => s !== status).map(s =>
+            `<button onclick="updateRoomStatus('${r.id}','${s}')" style="font-size:.7rem;padding:3px 8px;border-radius:12px;border:1px solid ${ROOM_STATUS_CFG[s].border};background:${ROOM_STATUS_CFG[s].bg};color:${ROOM_STATUS_CFG[s].color};cursor:pointer">${ROOM_STATUS_CFG[s].emoji} ${ROOM_STATUS_CFG[s].label}</button>`
+          ).join('')}
+        </div>
+      </div>`).join('');
+    return `<div style="border-radius:14px;border:2px solid ${cfg.border};background:${cfg.bg}20;padding:14px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;font-weight:700;color:${cfg.color};font-size:.9rem">
+        ${cfg.emoji} ${cfg.label} <span style="background:${cfg.bg};color:${cfg.color};border:1px solid ${cfg.border};border-radius:12px;font-size:.72rem;padding:2px 8px;margin-left:4px">${list.length}</span>
+      </div>
+      ${cards || `<div style="color:${cfg.color};font-size:.8rem;opacity:.6;text-align:center;padding:12px">Sin habitaciones</div>`}
+    </div>`;
+  }).join('');
+}
+
+function openRoomModal(room = null) {
+  roomEditId = room ? room.id : null;
+  document.getElementById('room-modal-title').textContent = room ? 'Editar habitación' : 'Nueva habitación';
+  document.getElementById('room-number').value = room?.number || '';
+  document.getElementById('room-floor').value  = room?.floor  || '';
+  document.getElementById('room-type').value   = room?.type   || 'doble';
+  document.getElementById('room-status').value = room?.status || 'libre';
+  document.getElementById('room-notes').value  = room?.notes  || '';
+  document.getElementById('room-edit-id').value = room?.id    || '';
+  document.getElementById('room-modal').style.display = 'block';
+}
+function closeRoomModal() { document.getElementById('room-modal').style.display = 'none'; roomEditId = null; }
+
+async function saveRoom() {
+  const body = {
+    number: document.getElementById('room-number').value.trim(),
+    floor:  document.getElementById('room-floor').value.trim(),
+    type:   document.getElementById('room-type').value,
+    status: document.getElementById('room-status').value,
+    notes:  document.getElementById('room-notes').value.trim(),
+  };
+  if (!body.number) { toast('El número de habitación es obligatorio', 'err'); return; }
+  const url    = roomEditId ? `/api/rooms/${roomEditId}` : '/api/rooms';
+  const method = roomEditId ? 'PUT' : 'POST';
+  const r = await api(url, { method, body: JSON.stringify(body) });
+  if (r.ok) { toast(roomEditId ? 'Habitación actualizada' : 'Habitación agregada'); closeRoomModal(); loadRooms(); }
+  else toast(r.error || 'Error', 'err');
+}
+
+async function editRoom(id) {
+  const rooms = await api('/api/rooms');
+  const room  = rooms.find(r => r.id === id);
+  if (room) openRoomModal(room);
+}
+
+async function updateRoomStatus(id, status) {
+  const r = await api(`/api/rooms/${id}`, { method: 'PUT', body: JSON.stringify({ status }) });
+  if (r.ok) loadRooms();
+  else toast(r.error || 'Error', 'err');
+}
+
+async function deleteRoom(id, number) {
+  if (!confirm(`¿Eliminar habitación ${number}?`)) return;
+  const r = await api(`/api/rooms/${id}`, { method: 'DELETE' });
+  if (r.ok) { toast(`Habitación ${number} eliminada`); loadRooms(); }
+  else toast(r.error || 'Error', 'err');
+}
+
+// ─── Chat Web ─────────────────────────────────────────────────────────────────
+let activeChatId  = null;
+let chatPollTimer = null;
+let chatLastTs    = 0;
+
+function showChatPublicUrl() {
+  const el = document.getElementById('chat-public-url');
+  if (el) el.textContent = `${location.protocol}//${location.host}/chat/{hotelId}`;
+}
+
+async function loadChat() {
+  clearTimeout(chatPollTimer);
+  const chats = await api('/api/chat');
+  const list  = document.getElementById('chat-session-list');
+  if (!chats || chats.error) { list.innerHTML = `<div style="padding:16px;color:var(--err)">${chats?.error || 'Error'}</div>`; return; }
+
+  // Update unread badge
+  const totalUnread = chats.reduce((s, c) => s + (c.unread || 0), 0);
+  const badge = document.getElementById('chat-unread-badge');
+  if (badge) { badge.textContent = totalUnread; badge.style.display = totalUnread > 0 ? '' : 'none'; }
+
+  if (!chats.length) {
+    list.innerHTML = `<div style="padding:24px;text-align:center;color:var(--muted);font-size:.84rem">💬 Sin conversaciones aún.<br/>Comparte la URL de chat con tus huéspedes.</div>`;
+    return;
+  }
+  const sorted = [...chats].sort((a, b) => new Date(b.lastAt) - new Date(a.lastAt));
+  list.innerHTML = sorted.map(c => {
+    const last = c.messages[c.messages.length - 1];
+    const lastText = last ? last.text.slice(0, 40) + (last.text.length > 40 ? '…' : '') : 'Sin mensajes';
+    const isActive = c.id === activeChatId;
+    const unread   = c.unread > 0;
+    return `<div onclick="openChatThread('${c.id}')" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;background:${isActive ? '#FEF3C7' : '#fff'};transition:.15s">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <span style="font-weight:${unread ? '700' : '500'};font-size:.88rem">${c.guestName}</span>
+        <span style="font-size:.7rem;color:var(--muted)">${new Date(c.lastAt).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:.78rem;color:var(--muted)">${lastText}</span>
+        ${unread ? `<span style="background:var(--gold);color:var(--navy);font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:10px">${c.unread}</span>` : ''}
+        ${c.status === 'closed' ? `<span style="font-size:.7rem;color:var(--muted);font-style:italic">Cerrado</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Auto-poll for unread count every 15s
+  chatPollTimer = setTimeout(() => { if (currentSection === 'chat') loadChat(); }, 15000);
+}
+
+async function openChatThread(chatId) {
+  activeChatId = chatId;
+  chatLastTs   = 0;
+  loadChat(); // re-render list with active state
+  const chats = await api('/api/chat');
+  const chat  = (chats || []).find(c => c.id === chatId);
+  if (!chat) return;
+
+  document.getElementById('chat-thread-name').textContent = `💬 ${chat.guestName}${chat.status === 'closed' ? ' (cerrado)' : ''}`;
+  const closeBtn = document.getElementById('chat-close-btn');
+  if (closeBtn) { closeBtn.style.display = chat.status !== 'closed' ? '' : 'none'; }
+  const replyArea = document.getElementById('chat-reply-area');
+  if (replyArea) { replyArea.style.display = chat.status !== 'closed' ? 'block' : 'none'; }
+
+  const msgEl = document.getElementById('chat-thread-messages');
+  msgEl.innerHTML = '';
+  for (const m of chat.messages) appendChatMsg(m);
+
+  // Continuously poll for new messages in this thread
+  clearTimeout(chatPollTimer);
+  pollChatThread(chatId);
+}
+
+function appendChatMsg(m) {
+  const el = document.createElement('div');
+  const isGuest = m.from === 'guest';
+  el.style.cssText = `max-width:76%;padding:10px 14px;border-radius:16px;font-size:.87rem;line-height:1.4;word-break:break-word;align-self:${isGuest ? 'flex-start' : 'flex-end'};background:${isGuest ? '#fff' : '#1C1C2E'};color:${isGuest ? 'var(--text)' : '#fff'};border:${isGuest ? '1px solid var(--border)' : 'none'};border-${isGuest ? 'bottom-left' : 'bottom-right'}-radius:4px`;
+  const time = new Date(m.ts).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+  el.innerHTML = `<div>${m.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div><div style="font-size:.68rem;color:${isGuest ? 'rgba(0,0,0,.35)' : 'rgba(255,255,255,.4)'};margin-top:4px">${isGuest ? '👤' : '🏨'} ${time}</div>`;
+  const container = document.getElementById('chat-thread-messages');
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+  chatLastTs = Math.max(chatLastTs, new Date(m.ts).getTime());
+}
+
+async function pollChatThread(chatId) {
+  if (currentSection !== 'chat' || activeChatId !== chatId) return;
+  try {
+    const chats = await api('/api/chat');
+    const chat  = (chats || []).find(c => c.id === chatId);
+    if (chat) {
+      const newMsgs = chat.messages.filter(m => new Date(m.ts).getTime() > chatLastTs);
+      newMsgs.forEach(appendChatMsg);
+      // Update unread badge in sidebar
+      const total = chats.reduce((s, c) => s + (c.unread || 0), 0);
+      const badge = document.getElementById('chat-unread-badge');
+      if (badge) { badge.textContent = total; badge.style.display = total > 0 ? '' : 'none'; }
+    }
+  } catch {}
+  chatPollTimer = setTimeout(() => pollChatThread(chatId), 5000);
+}
+
+async function sendChatReply() {
+  if (!activeChatId) return;
+  const input = document.getElementById('chat-reply-input');
+  const text  = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  const r = await api(`/api/chat/${activeChatId}/reply`, { method: 'POST', body: JSON.stringify({ text }) });
+  if (r.ok) { appendChatMsg(r.msg); loadChat(); }
+  else toast(r.error || 'Error al enviar', 'err');
+}
+
+async function closeChatSession() {
+  if (!activeChatId) return;
+  if (!confirm('¿Cerrar esta conversación?')) return;
+  const r = await api(`/api/chat/${activeChatId}/close`, { method: 'PUT' });
+  if (r.ok) { toast('Conversación cerrada'); activeChatId = null; loadChat(); openChatThread; }
+}
+
+// Poll unread count in background every 30s when not in chat section
+setInterval(async () => {
+  if (currentSection === 'chat') return;
+  try {
+    const r = await fetch('/api/chat/unread');
+    if (!r.ok) return;
+    const d = await r.json();
+    const badge = document.getElementById('chat-unread-badge');
+    if (badge) { badge.textContent = d.total; badge.style.display = d.total > 0 ? '' : 'none'; }
+  } catch {}
+}, 30000);
+
+// ─── Analytics ───────────────────────────────────────────────────────────────
+async function loadAnalytics() {
+  const d = await api('/api/analytics');
+  if (!d || d.error) {
+    document.getElementById('analytics-kpis').innerHTML = `<div class="card" style="grid-column:1/-1;color:var(--err);text-align:center;padding:24px">${d?.error || 'Error al cargar analytics'}</div>`;
+    return;
+  }
+
+  // KPI cards
+  const kpis = [
+    { emoji: '🏨', label: 'Ocupación', value: `${d.occupancyRate}%`,        sub: `${d.activeGuests} / ${d.totalRooms || '?'} hab.` },
+    { emoji: '✈️', label: 'Llegadas hoy',  value: d.arrivalsToday,          sub: `${d.checkoutsToday} salidas` },
+    { emoji: '👥', label: 'Huéspedes (30d)', value: d.guestsLast30,         sub: `${d.returningGuests} frecuentes` },
+    { emoji: '🎫', label: 'Tickets abiertos', value: d.openTickets,         sub: `${d.resolvedTickets} resueltos` },
+    { emoji: '⏱️', label: 'Resolución avg', value: `${d.avgResolutionHours}h`, sub: 'por ticket' },
+    { emoji: '⭐', label: 'Reseñas positivas', value: d.reviewsPositive,    sub: `${d.reviewsNegative} negativas` },
+    { emoji: '💬', label: 'Chats abiertos',  value: d.openChats,            sub: `${d.totalUnread} sin leer` },
+    { emoji: '✈️', label: 'Pre check-ins',   value: d.precheckinsSent,      sub: 'enviados' },
+  ];
+  document.getElementById('analytics-kpis').innerHTML = kpis.map(k => `
+    <div class="card" style="text-align:center;padding:20px 16px">
+      <div style="font-size:1.6rem;margin-bottom:6px">${k.emoji}</div>
+      <div style="font-size:1.6rem;font-weight:700;font-family:'Playfair Display',serif;color:var(--navy)">${k.value}</div>
+      <div style="font-size:.78rem;font-weight:600;color:var(--text);margin:4px 0">${k.label}</div>
+      <div style="font-size:.72rem;color:var(--muted)">${k.sub}</div>
+    </div>`).join('');
+
+  // Rooms chart
+  renderBarChart('chart-rooms', [
+    { label: '🟢 Libre',    value: d.roomByStatus.libre         || 0, color: '#10B981' },
+    { label: '🔴 Ocupada',  value: d.roomByStatus.ocupada        || 0, color: '#EF4444' },
+    { label: '🧹 Limpieza', value: d.roomByStatus.limpieza       || 0, color: '#F59E0B' },
+    { label: '🔧 Mantto',   value: d.roomByStatus.mantenimiento  || 0, color: '#8B5CF6' },
+  ]);
+
+  // Tickets by category chart
+  const catEntries = Object.entries(d.ticketCategories || {}).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  renderBarChart('chart-tickets', catEntries.map(([k, v]) => ({ label: k, value: v, color: '#C9A96E' })));
+
+  // Reviews chart
+  renderBarChart('chart-reviews', [
+    { label: '🟢 Positiva',  value: d.reviewsPositive || 0, color: '#10B981' },
+    { label: '🔴 Negativa',  value: d.reviewsNegative || 0, color: '#EF4444' },
+    { label: '⏳ Pendiente', value: d.reviewsPending  || 0, color: '#F59E0B' },
+  ]);
+}
+
+function renderBarChart(containerId, items) {
+  const el  = document.getElementById(containerId);
+  if (!el) return;
+  const max = Math.max(...items.map(i => i.value), 1);
+  el.innerHTML = items.length
+    ? items.map(item => `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:3px">
+          <span style="color:var(--text)">${item.label}</span>
+          <span style="font-weight:600;color:var(--navy)">${item.value}</span>
+        </div>
+        <div style="height:8px;background:#f0ece4;border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${Math.round(item.value / max * 100)}%;background:${item.color};border-radius:4px;transition:width .4s"></div>
+        </div>
+      </div>`).join('')
+    : '<div style="color:var(--muted);font-size:.82rem">Sin datos</div>';
+}
+</script>
+
+</body>
+</html>

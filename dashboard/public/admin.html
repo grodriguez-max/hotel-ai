@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HotelClaw — Super Admin</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f0f; color: #e8e8e8; min-height: 100vh; }
+
+  /* Login */
+  #login-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 100%);
+  }
+  .login-box {
+    background: #1a1a1a; border: 1px solid #333; border-radius: 16px;
+    padding: 48px; width: 380px; text-align: center;
+  }
+  .login-logo { font-size: 48px; margin-bottom: 8px; }
+  .login-title { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .login-sub { font-size: 13px; color: #888; margin-bottom: 32px; }
+  .login-box input {
+    width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid #333;
+    background: #111; color: #fff; font-size: 15px; margin-bottom: 12px; outline: none;
+  }
+  .login-box input:focus { border-color: #7c3aed; }
+  .btn-login {
+    width: 100%; padding: 13px; border-radius: 8px; border: none;
+    background: #7c3aed; color: #fff; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: background .2s;
+  }
+  .btn-login:hover { background: #6d28d9; }
+  .login-error { color: #f87171; font-size: 13px; margin-top: 10px; }
+
+  /* Layout */
+  #app { display: none; min-height: 100vh; }
+  .topbar {
+    background: #1a1a1a; border-bottom: 1px solid #2a2a2a;
+    padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar-brand { font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
+  .topbar-brand span { font-size: 22px; }
+  .badge-admin {
+    background: #7c3aed; color: #fff; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px; letter-spacing: 0.05em;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .btn-sm {
+    padding: 6px 14px; border-radius: 6px; border: 1px solid #333;
+    background: transparent; color: #aaa; font-size: 13px; cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-sm:hover { background: #2a2a2a; color: #fff; }
+
+  .content { padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+  /* Stats cards */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .stat-card {
+    background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px;
+  }
+  .stat-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .stat-value { font-size: 32px; font-weight: 700; color: #fff; }
+  .stat-icon { font-size: 22px; margin-bottom: 8px; }
+
+  /* Hotels section */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+  }
+  .section-title { font-size: 18px; font-weight: 600; color: #fff; }
+  .btn-primary {
+    padding: 9px 18px; border-radius: 8px; border: none;
+    background: #7c3aed; color: #fff; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: background .2s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-primary:hover { background: #6d28d9; }
+
+  /* Table */
+  .table-wrap { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 12px 16px; text-align: left; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #2a2a2a; }
+  td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid #1e1e1e; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #202020; }
+  .hotel-name { font-weight: 600; color: #fff; }
+  .hotel-email { color: #888; font-size: 13px; }
+  .badge-plan {
+    display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .plan-starter { background: #1e2a1e; color: #4ade80; }
+  .plan-pro     { background: #1e1e2a; color: #818cf8; }
+  .plan-enterprise { background: #2a1e1e; color: #fb923c; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .dot-green { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+  .dot-gray  { background: #444; }
+  .actions { display: flex; gap: 8px; }
+  .btn-icon { padding: 5px 10px; border-radius: 6px; border: 1px solid #333; background: transparent; color: #aaa; font-size: 13px; cursor: pointer; }
+  .btn-icon:hover { background: #2a2a2a; color: #fff; }
+  .btn-danger { border-color: #7f1d1d; color: #f87171; }
+  .btn-danger:hover { background: #2a1212; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7);
+    align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #1a1a1a; border: 1px solid #333; border-radius: 16px;
+    padding: 32px; width: 440px; max-width: 95vw;
+  }
+  .modal-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 24px; }
+  .form-row { margin-bottom: 16px; }
+  .form-row label { display: block; font-size: 13px; color: #888; margin-bottom: 6px; }
+  .form-row input, .form-row select {
+    width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #333;
+    background: #111; color: #fff; font-size: 14px; outline: none;
+  }
+  .form-row input:focus, .form-row select:focus { border-color: #7c3aed; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+  .btn-cancel { padding: 10px 20px; border-radius: 8px; border: 1px solid #333; background: transparent; color: #aaa; font-size: 14px; cursor: pointer; }
+  .btn-cancel:hover { background: #2a2a2a; }
+
+  /* Password section */
+  .admin-section { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 24px; margin-top: 32px; }
+  .admin-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #ccc; }
+  .inline-form { display: flex; gap: 10px; }
+  .inline-form input { flex: 1; padding: 9px 14px; border-radius: 8px; border: 1px solid #333; background: #111; color: #fff; font-size: 14px; outline: none; }
+  .inline-form input:focus { border-color: #7c3aed; }
+
+  .empty-state { padding: 40px; text-align: center; color: #555; font-size: 14px; }
+  .msg { font-size: 13px; padding: 6px 12px; border-radius: 6px; margin-top: 10px; display: none; }
+  .msg.ok  { background: #1a2a1a; color: #4ade80; display: block; }
+  .msg.err { background: #2a1a1a; color: #f87171; display: block; }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🛎️</div>
+    <div class="login-title">HotelClaw Admin</div>
+    <div class="login-sub">Panel de administración</div>
+    <input id="adm-email" type="email" placeholder="Email" value="admin@hotelclaw.ai">
+    <input id="adm-pass" type="password" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    <button class="btn-login" onclick="doAdminLogin()">Ingresar</button>
+    <div id="login-err" class="login-error"></div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span>🛎️</span> HotelClaw
+      <span class="badge-admin">ADMIN</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-sm" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Stats -->
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-icon">🏨</div><div class="stat-label">Hoteles</div><div class="stat-value" id="stat-hotels">—</div></div>
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-label">Contactos totales</div><div class="stat-value" id="stat-contacts">—</div></div>
+      <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-label">Secuencias</div><div class="stat-value" id="stat-sequences">—</div></div>
+      <div class="stat-card"><div class="stat-icon">📨</div><div class="stat-label">Emails enviados</div><div class="stat-value" id="stat-sent">—</div></div>
+    </div>
+
+    <!-- Hotels table -->
+    <div class="section-header">
+      <div class="section-title">Hoteles registrados</div>
+      <button class="btn-primary" onclick="openCreateModal()">＋ Crear hotel</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Hotel</th>
+            <th>Plan</th>
+            <th>Staff Bot</th>
+            <th>Contactos</th>
+            <th>Creado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="hotels-tbody">
+          <tr><td colspan="6" class="empty-state">Cargando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Change admin password -->
+    <div class="admin-section">
+      <h3>🔐 Cambiar contraseña de admin</h3>
+      <div class="inline-form">
+        <input id="new-pass" type="password" placeholder="Nueva contraseña (mínimo 6 caracteres)">
+        <button class="btn-primary" onclick="changeAdminPass()">Guardar</button>
+      </div>
+      <div id="pass-msg" class="msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal crear hotel -->
+<div class="modal-overlay" id="modal-create">
+  <div class="modal">
+    <div class="modal-title">🏨 Crear nuevo hotel</div>
+    <div class="form-row">
+      <label>Nombre del hotel</label>
+      <input id="h-nombre" type="text" placeholder="Hotel Casa del Mar">
+    </div>
+    <div class="form-row">
+      <label>Email (para login)</label>
+      <input id="h-email" type="email" placeholder="admin@hotelcasadelmar.com">
+    </div>
+    <div class="form-row">
+      <label>Contraseña inicial</label>
+      <input id="h-pass" type="password" placeholder="Mínimo 6 caracteres">
+    </div>
+    <div class="form-row">
+      <label>Plan</label>
+      <select id="h-plan">
+        <option value="starter">Starter</option>
+        <option value="pro">Pro</option>
+        <option value="enterprise">Enterprise</option>
+      </select>
+    </div>
+    <div id="create-msg" class="msg"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" onclick="doCreateHotel()">Crear hotel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal editar hotel -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-title">✏️ Editar hotel</div>
+    <input type="hidden" id="edit-id">
+    <div class="form-row">
+      <label>Nombre del hotel</label>
+      <input id="edit-nombre" type="text">
+    </div>
+    <div class="form-row">
+      <label>Email (para login)</label>
+      <input id="edit-email" type="email">
+    </div>
+    <div class="form-row">
+      <label>Nueva contraseña (dejar vacío para no cambiar)</label>
+      <input id="edit-pass" type="password" placeholder="Nueva contraseña…">
+    </div>
+    <div class="form-row">
+      <label>Plan</label>
+      <select id="edit-plan">
+        <option value="starter">Starter</option>
+        <option value="pro">Pro</option>
+        <option value="enterprise">Enterprise</option>
+      </select>
+    </div>
+    <div id="edit-msg" class="msg"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="document.getElementById('modal-edit').classList.remove('open')">Cancelar</button>
+      <button class="btn-primary" onclick="doEditHotel()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<script>
+async function api(url, opts = {}) {
+  const r = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  return r.json();
+}
+
+async function doAdminLogin() {
+  const email    = document.getElementById('adm-email').value.trim();
+  const password = document.getElementById('adm-pass').value;
+  const err      = document.getElementById('login-err');
+  err.textContent = '';
+  try {
+    const r = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+    if (!r.ok || r.role !== 'admin') { err.textContent = r.error || 'Sin permisos de administrador'; return; }
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadData();
+  } catch { err.textContent = 'Error de conexión'; }
+}
+
+async function doLogout() {
+  await api('/api/auth/logout', { method: 'POST' });
+  location.reload();
+}
+
+async function loadData() {
+  const [stats, hotels] = await Promise.all([
+    api('/admin/api/stats'),
+    api('/admin/api/hotels'),
+  ]);
+  document.getElementById('stat-hotels').textContent    = stats.hotels    ?? '—';
+  document.getElementById('stat-contacts').textContent  = stats.contacts  ?? '—';
+  document.getElementById('stat-sequences').textContent = stats.sequences ?? '—';
+  document.getElementById('stat-sent').textContent      = stats.sent      ?? '—';
+  renderHotels(hotels);
+}
+
+function planBadge(plan) {
+  const cls = { starter: 'plan-starter', pro: 'plan-pro', enterprise: 'plan-enterprise' }[plan] || 'plan-starter';
+  return `<span class="badge-plan ${cls}">${plan}</span>`;
+}
+
+function renderHotels(hotels) {
+  const tbody = document.getElementById('hotels-tbody');
+  if (!hotels.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No hay hoteles registrados. Crea el primero.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = hotels.map(h => `
+    <tr>
+      <td>
+        <div class="hotel-name">${h.nombre}</div>
+        <div class="hotel-email">${h.email}</div>
+        <div style="font-size:11px;color:#555;margin-top:2px">${h.id}</div>
+      </td>
+      <td>${planBadge(h.plan)}</td>
+      <td>
+        <span class="status-dot ${h.staffBotActive ? 'dot-green' : 'dot-gray'}"></span>
+        ${h.staffBotActive ? 'Activo' : 'Inactivo'}
+      </td>
+      <td>${h.contacts}</td>
+      <td style="color:#666;font-size:13px">${new Date(h.createdAt).toLocaleDateString('es-MX')}</td>
+      <td>
+        <div class="actions">
+          <button class="btn-icon" onclick="openEditModal('${h.id}','${h.nombre}','${h.email}','${h.plan}')">✏️ Editar</button>
+          <button class="btn-icon btn-danger" onclick="deleteHotel('${h.id}','${h.nombre}')">🗑️ Eliminar</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openCreateModal() {
+  document.getElementById('h-nombre').value = '';
+  document.getElementById('h-email').value  = '';
+  document.getElementById('h-pass').value   = '';
+  document.getElementById('h-plan').value   = 'starter';
+  document.getElementById('create-msg').className = 'msg';
+  document.getElementById('create-msg').textContent = '';
+  document.getElementById('modal-create').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal-create').classList.remove('open');
+}
+
+async function doCreateHotel() {
+  const msg = document.getElementById('create-msg');
+  const body = {
+    nombre:   document.getElementById('h-nombre').value.trim(),
+    email:    document.getElementById('h-email').value.trim(),
+    password: document.getElementById('h-pass').value,
+    plan:     document.getElementById('h-plan').value,
+  };
+  if (!body.nombre || !body.email || !body.password) {
+    msg.className = 'msg err'; msg.textContent = 'Todos los campos son requeridos'; return;
+  }
+  try {
+    const r = await api('/admin/api/hotels', { method: 'POST', body: JSON.stringify(body) });
+    if (!r.ok) { msg.className = 'msg err'; msg.textContent = r.error; return; }
+    msg.className = 'msg ok'; msg.textContent = `✅ Hotel "${body.nombre}" creado (ID: ${r.hotelId})`;
+    setTimeout(() => { closeModal(); loadData(); }, 1500);
+  } catch { msg.className = 'msg err'; msg.textContent = 'Error de conexión'; }
+}
+
+function openEditModal(id, nombre, email, plan) {
+  document.getElementById('edit-id').value     = id;
+  document.getElementById('edit-nombre').value = nombre;
+  document.getElementById('edit-email').value  = email;
+  document.getElementById('edit-pass').value   = '';
+  document.getElementById('edit-plan').value   = plan;
+  document.getElementById('edit-msg').className = 'msg';
+  document.getElementById('edit-msg').textContent = '';
+  document.getElementById('modal-edit').classList.add('open');
+}
+
+async function doEditHotel() {
+  const id  = document.getElementById('edit-id').value;
+  const msg = document.getElementById('edit-msg');
+  const body = {
+    nombre: document.getElementById('edit-nombre').value.trim(),
+    email:  document.getElementById('edit-email').value.trim(),
+    plan:   document.getElementById('edit-plan').value,
+  };
+  const pass = document.getElementById('edit-pass').value;
+  if (pass) body.password = pass;
+  try {
+    const r = await api(`/admin/api/hotels/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
+    if (!r.ok) { msg.className = 'msg err'; msg.textContent = r.error; return; }
+    msg.className = 'msg ok'; msg.textContent = '✅ Cambios guardados';
+    setTimeout(() => { document.getElementById('modal-edit').classList.remove('open'); loadData(); }, 1200);
+  } catch { msg.className = 'msg err'; msg.textContent = 'Error de conexión'; }
+}
+
+async function deleteHotel(id, nombre) {
+  if (!confirm(`¿Eliminar "${nombre}"?\n\nSe borrarán todos sus datos (contactos, secuencias, credenciales). Esta acción no se puede deshacer.`)) return;
+  try {
+    const r = await api(`/admin/api/hotels/${id}`, { method: 'DELETE' });
+    if (!r.ok) { alert('Error: ' + r.error); return; }
+    loadData();
+  } catch { alert('Error de conexión'); }
+}
+
+async function changeAdminPass() {
+  const pass = document.getElementById('new-pass').value;
+  const msg  = document.getElementById('pass-msg');
+  if (!pass || pass.length < 6) { msg.className = 'msg err'; msg.textContent = 'Mínimo 6 caracteres'; return; }
+  try {
+    const r = await api('/admin/api/password', { method: 'PATCH', body: JSON.stringify({ password: pass }) });
+    if (!r.ok) { msg.className = 'msg err'; msg.textContent = r.error; return; }
+    msg.className = 'msg ok'; msg.textContent = '✅ Contraseña actualizada';
+    document.getElementById('new-pass').value = '';
+  } catch { msg.className = 'msg err'; msg.textContent = 'Error de conexión'; }
+}
+
+// Check session on load
+(async () => {
+  try {
+    const me = await api('/api/auth/me');
+    if (me.role === 'admin') {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      loadData();
+    }
+  } catch {}
+})();
+</script>
+</body>
+</html>

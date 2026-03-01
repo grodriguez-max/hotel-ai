@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HotelClaw — El AI concierge para hoteles boutique</title>
+  <meta name="description" content="Aria atiende huéspedes 24/7 por WhatsApp y Telegram, responde reseñas, genera contenido y gestiona quejas — en español e inglés, automáticamente." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Variables ─────────────────────────────────────────────── */
+    :root {
+      --bg:       #0D1117;
+      --bg2:      #161B22;
+      --bg3:      #1C2128;
+      --border:   #30363D;
+      --border2:  #21262D;
+      --text:     #F0F6FC;
+      --text2:    #8B949E;
+      --text3:    #6E7681;
+      --gold:     #C9A96E;
+      --gold2:    #a8874e;
+      --green:    #3FB950;
+      --blue:     #58A6FF;
+      --red:      #F85149;
+    }
+    /* ── Reset ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; font-size: 15px; }
+    a { text-decoration: none; color: inherit; }
+    h1,h2,h3 { line-height: 1.25; font-weight: 700; }
+
+    /* ── Layout ────────────────────────────────────────────────── */
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+    .container-sm { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── Tags / badges ─────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(201,169,110,.1); color: var(--gold);
+      border: 1px solid rgba(201,169,110,.25);
+      padding: 4px 12px; border-radius: 20px;
+      font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+    }
+    .badge-green { background: rgba(63,185,80,.1); color: var(--green); border-color: rgba(63,185,80,.25); }
+
+    /* ── Buttons ───────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 22px; border-radius: 8px; font-size: .9rem; font-weight: 600;
+      cursor: pointer; border: none; transition: all .15s; white-space: nowrap;
+    }
+    .btn-gold  { background: var(--gold); color: #0D1117; }
+    .btn-gold:hover  { background: var(--gold2); }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg3); border-color: var(--text3); }
+    .btn-green { background: var(--green); color: #0D1117; }
+    .btn-green:hover { opacity: .88; }
+    .btn-lg { padding: 13px 28px; font-size: .975rem; border-radius: 9px; }
+
+    /* ── Section spacing ───────────────────────────────────────── */
+    section { padding: 80px 0; }
+    .section-tag  { margin-bottom: 10px; }
+    .section-title { font-size: clamp(1.7rem, 3.5vw, 2.4rem); margin-bottom: 14px; color: var(--text); }
+    .section-sub { color: var(--text2); max-width: 560px; font-size: .95rem; }
+
+    /* ── Divider ───────────────────────────────────────────────── */
+    .divider { border: none; border-top: 1px solid var(--border); }
+
+    /* ── Animations ────────────────────────────────────────────── */
+    .fade { opacity: 0; transform: translateY(20px); transition: opacity .55s ease, transform .55s ease; }
+    .fade.in { opacity: 1; transform: none; }
+    .d1 { transition-delay: .1s; } .d2 { transition-delay: .2s; } .d3 { transition-delay: .3s; } .d4 { transition-delay: .4s; }
+
+    /* ══════════════════════════════════════════════════════════════
+       NAV
+    ══════════════════════════════════════════════════════════════ */
+    #nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      border-bottom: 1px solid transparent;
+      transition: background .25s, border-color .25s;
+      padding: 14px 0;
+    }
+    #nav.solid { background: rgba(13,17,23,.92); border-color: var(--border2); backdrop-filter: blur(12px); }
+    .nav-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .nav-logo { display: flex; align-items: center; gap: 8px; font-size: 1rem; font-weight: 700; color: var(--text); }
+    .nav-logo .lobster { font-size: 1.3rem; }
+    .nav-logo .version { font-size: .7rem; color: var(--text3); font-weight: 400; border: 1px solid var(--border); padding: 1px 7px; border-radius: 20px; }
+    .nav-center { display: flex; align-items: center; gap: 28px; }
+    .nav-center a { color: var(--text2); font-size: .875rem; transition: color .15s; font-weight: 500; }
+    .nav-center a:hover { color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       HERO
+    ══════════════════════════════════════════════════════════════ */
+    #hero {
+      padding: 140px 0 80px;
+      position: relative; overflow: hidden;
+    }
+    #hero::before {
+      content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 900px; height: 600px; border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(201,169,110,.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-inner { text-align: center; position: relative; z-index: 1; }
+    .hero-eyebrow { margin-bottom: 18px; }
+    .hero-title {
+      font-size: clamp(2.4rem, 6vw, 4rem); font-weight: 800;
+      color: var(--text); margin-bottom: 18px; letter-spacing: -.02em;
+    }
+    .hero-title .accent { color: var(--gold); }
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.15rem); color: var(--text2);
+      max-width: 580px; margin: 0 auto 36px; font-weight: 400;
+    }
+    .hero-sub strong { color: var(--text); font-weight: 600; }
+    .hero-cta { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-bottom: 48px; }
+
+    /* install block */
+    .install-block {
+      display: inline-flex; align-items: center; gap: 0;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden; font-family: 'SFMono-Regular', Consolas, monospace;
+      margin-bottom: 8px;
+    }
+    .install-prompt { background: var(--bg3); color: var(--text3); padding: 11px 14px; font-size: .82rem; border-right: 1px solid var(--border); }
+    .install-cmd { padding: 11px 16px; font-size: .82rem; color: var(--text); }
+    .install-cmd .cmd-gold { color: var(--gold); }
+    .install-copy {
+      padding: 11px 14px; color: var(--text3); cursor: pointer; transition: color .15s;
+      border-left: 1px solid var(--border); font-size: .82rem;
+    }
+    .install-copy:hover { color: var(--text); }
+
+    /* avatars */
+    .social-proof { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .avatars { display: flex; }
+    .av {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--bg); background: var(--bg3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .62rem; font-weight: 700; color: var(--gold);
+      margin-left: -6px; font-family: monospace;
+    }
+    .av:first-child { margin-left: 0; }
+    .social-text { font-size: .8rem; color: var(--text3); }
+    .social-text strong { color: var(--text2); }
+
+    /* ══════════════════════════════════════════════════════════════
+       DEMO TERMINAL / CHAT
+    ══════════════════════════════════════════════════════════════ */
+    #demo-hero {
+      padding: 0 0 80px;
+    }
+    .demo-window {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,.5);
+    }
+    .window-bar {
+      background: var(--bg3); border-bottom: 1px solid var(--border);
+      padding: 10px 16px; display: flex; align-items: center; gap: 8px;
+    }
+    .dot-r { width: 12px; height: 12px; border-radius: 50%; background: #FF5F57; }
+    .dot-y { width: 12px; height: 12px; border-radius: 50%; background: #FEBC2E; }
+    .dot-g { width: 12px; height: 12px; border-radius: 50%; background: #28C840; }
+    .window-title { font-size: .78rem; color: var(--text3); margin-left: 8px; }
+    .demo-body { display: grid; grid-template-columns: 1fr 1fr; }
+
+    /* left: terminal / commands */
+    .demo-terminal { padding: 24px; border-right: 1px solid var(--border); font-family: 'SFMono-Regular', Consolas, monospace; font-size: .8rem; }
+    .t-line { display: flex; gap: 8px; margin-bottom: 6px; line-height: 1.5; }
+    .t-ps1  { color: var(--green); flex-shrink: 0; }
+    .t-cmd  { color: var(--text); }
+    .t-out  { color: var(--text2); padding-left: 16px; margin-bottom: 4px; display: block; }
+    .t-ok   { color: var(--green); }
+    .t-gold { color: var(--gold); }
+    .t-blue { color: var(--blue); }
+    .t-dim  { color: var(--text3); }
+    .cursor { display: inline-block; width: 8px; height: 14px; background: var(--green); animation: blink 1s step-end infinite; vertical-align: text-bottom; margin-left: 2px; }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* right: chat */
+    .demo-chat { padding: 20px; }
+    .chat-hdr { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid var(--border2); margin-bottom: 14px; }
+    .chat-av { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold2)); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .chat-info .name { font-size: .85rem; font-weight: 600; color: var(--text); }
+    .chat-info .status { font-size: .68rem; color: var(--green); }
+    .bubble-wrap { margin-bottom: 10px; }
+    .bubble-wrap.right { text-align: right; }
+    .bubble {
+      display: inline-block; max-width: 88%; padding: 8px 12px; border-radius: 12px;
+      font-size: .78rem; line-height: 1.5; text-align: left;
+    }
+    .bubble.guest { background: var(--gold); color: #0D1117; font-weight: 500; border-radius: 12px 12px 4px 12px; }
+    .bubble.aria  { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); border-radius: 12px 12px 12px 4px; }
+    .btime { font-size: .62rem; color: var(--text3); margin-top: 3px; padding: 0 2px; }
+    .typing-dots { display: inline-flex; gap: 3px; padding: 4px 2px; align-items: center; }
+    .typing-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--text3); animation: td .8s infinite ease-in-out; }
+    .typing-dots span:nth-child(2) { animation-delay: .13s; }
+    .typing-dots span:nth-child(3) { animation-delay: .26s; }
+    @keyframes td { 0%,80%,100% { transform: scale(1); opacity:.4; } 40% { transform: scale(1.3); opacity:1; } }
+
+    /* ══════════════════════════════════════════════════════════════
+       FEATURES
+    ══════════════════════════════════════════════════════════════ */
+    #features { border-top: 1px solid var(--border2); }
+    .features-header { text-align: center; margin-bottom: 56px; }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border2); border: 1px solid var(--border2); border-radius: 12px; overflow: hidden; }
+    .feature-card { background: var(--bg); padding: 28px; transition: background .15s; }
+    .feature-card:hover { background: var(--bg2); }
+    .feature-icon { font-size: 1.6rem; margin-bottom: 14px; }
+    .feature-title { font-size: .95rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+    .feature-text { font-size: .82rem; color: var(--text2); line-height: 1.65; margin-bottom: 12px; }
+    .feature-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--bg3); border: 1px solid var(--border);
+      padding: 3px 10px; border-radius: 20px; font-size: .72rem; color: var(--text3);
+    }
+    .feature-pill .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+
+    /* ══════════════════════════════════════════════════════════════
+       CHANNELS / INTEGRATIONS
+    ══════════════════════════════════════════════════════════════ */
+    #channels { border-top: 1px solid var(--border2); background: var(--bg); }
+    .channels-header { text-align: center; margin-bottom: 48px; }
+    .channels-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 16px; }
+    .channel-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg2); border: 1px solid var(--border);
+      padding: 8px 16px; border-radius: 9px; font-size: .82rem; font-weight: 600; color: var(--text);
+      transition: border-color .15s, background .15s;
+    }
+    .channel-chip:hover { border-color: var(--gold); background: var(--bg3); }
+    .channel-chip .ico { font-size: 1.1rem; }
+    .channels-note { text-align: center; font-size: .8rem; color: var(--text3); margin-top: 8px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       TESTIMONIALS
+    ══════════════════════════════════════════════════════════════ */
+    #testimonios { border-top: 1px solid var(--border2); }
+    .testimonios-header { text-align: center; margin-bottom: 48px; }
+    .testimonios-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .tcard {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 24px; transition: border-color .15s;
+    }
+    .tcard:hover { border-color: var(--gold); }
+    .tcard-quote { font-size: .875rem; color: var(--text2); line-height: 1.7; margin-bottom: 18px; }
+    .tcard-quote::before { content: '"'; color: var(--gold); font-size: 1.2rem; font-weight: 700; }
+    .tcard-author { display: flex; align-items: center; gap: 10px; }
+    .tcard-av { width: 36px; height: 36px; border-radius: 50%; background: var(--bg3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; color: var(--gold); flex-shrink: 0; }
+    .tcard-name  { font-size: .82rem; font-weight: 700; color: var(--text); }
+    .tcard-hotel { font-size: .72rem; color: var(--text3); }
+    .tcard-stars { color: var(--gold); font-size: .7rem; letter-spacing: 1px; margin-top: 1px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       HOW IT WORKS
+    ══════════════════════════════════════════════════════════════ */
+    #como { border-top: 1px solid var(--border2); }
+    .como-header { text-align: center; margin-bottom: 48px; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .step { position: relative; }
+    .step::after { content: '→'; position: absolute; top: 6px; right: -20px; color: var(--border); font-size: 1.2rem; }
+    .step:last-child::after { display: none; }
+    .step-num { font-size: .72rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; }
+    .step-title { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+    .step-text { font-size: .82rem; color: var(--text2); line-height: 1.65; }
+    .step-code {
+      margin-top: 12px; background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 14px;
+      font-family: 'SFMono-Regular', Consolas, monospace; font-size: .75rem; color: var(--text2);
+    }
+    .step-code .hl { color: var(--gold); }
+
+    /* ══════════════════════════════════════════════════════════════
+       PRICING
+    ══════════════════════════════════════════════════════════════ */
+    #pricing { border-top: 1px solid var(--border2); }
+    .pricing-header { text-align: center; margin-bottom: 48px; }
+    .pricing-toggle { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 40px; font-size: .85rem; color: var(--text2); }
+    .toggle { width: 44px; height: 22px; background: var(--border); border-radius: 11px; position: relative; cursor: pointer; transition: background .2s; border: none; }
+    .toggle.on { background: var(--gold); }
+    .toggle .knob { width: 16px; height: 16px; background: var(--bg2); border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: left .2s; }
+    .toggle.on .knob { left: 25px; background: var(--bg); }
+    .save-pill { background: rgba(63,185,80,.15); color: var(--green); border: 1px solid rgba(63,185,80,.3); padding: 2px 8px; border-radius: 20px; font-size: .7rem; font-weight: 700; }
+    .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .plan { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 28px; position: relative; }
+    .plan.popular { border-color: var(--gold); }
+    .plan-top-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: var(--gold); color: var(--bg); font-size: .68rem; font-weight: 700; padding: 3px 14px; border-radius: 20px; white-space: nowrap; }
+    .plan-name  { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text3); margin-bottom: 6px; }
+    .plan-price { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
+    .plan-price .sym { font-size: 1rem; color: var(--text2); font-weight: 600; }
+    .plan-price .num { font-size: 2.4rem; font-weight: 800; color: var(--text); line-height: 1; }
+    .plan-price .per { font-size: .82rem; color: var(--text3); }
+    .plan-desc { font-size: .8rem; color: var(--text3); margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border2); }
+    .plan-list { list-style: none; margin-bottom: 24px; }
+    .plan-list li { display: flex; gap: 8px; font-size: .82rem; margin-bottom: 8px; align-items: flex-start; }
+    .plan-list .y { color: var(--green); flex-shrink: 0; font-weight: 700; }
+    .plan-list .n { color: var(--text3); flex-shrink: 0; }
+    .plan-list .txt { color: var(--text2); }
+    .plan-list .txt.dim { color: var(--text3); }
+
+    /* ══════════════════════════════════════════════════════════════
+       FAQ
+    ══════════════════════════════════════════════════════════════ */
+    #faq { border-top: 1px solid var(--border2); }
+    .faq-header { text-align: center; margin-bottom: 48px; }
+    .faq-list { max-width: 680px; margin: 0 auto; }
+    .faq-item { border-bottom: 1px solid var(--border2); }
+    .faq-btn { width: 100%; text-align: left; background: none; border: none; color: var(--text); cursor: pointer; padding: 18px 0; display: flex; justify-content: space-between; align-items: center; font-size: .9rem; font-weight: 600; gap: 16px; transition: color .15s; }
+    .faq-btn:hover { color: var(--gold); }
+    .faq-arrow { color: var(--text3); transition: transform .22s; flex-shrink: 0; }
+    .faq-item.open .faq-arrow { transform: rotate(45deg); color: var(--gold); }
+    .faq-body { font-size: .85rem; color: var(--text2); line-height: 1.7; max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s; }
+    .faq-item.open .faq-body { max-height: 200px; padding-bottom: 16px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       CTA FINAL
+    ══════════════════════════════════════════════════════════════ */
+    #cta { border-top: 1px solid var(--border2); text-align: center; padding: 96px 0; }
+    .cta-glow {
+      display: inline-block; padding: 64px; border-radius: 20px;
+      background: radial-gradient(ellipse at center, rgba(201,169,110,.07) 0%, transparent 70%);
+      width: 100%;
+    }
+    #cta h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: 14px; font-weight: 800; letter-spacing: -.02em; }
+    #cta p { color: var(--text2); margin-bottom: 32px; font-size: .975rem; }
+    .cta-btns { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
+    .cta-sub { margin-top: 18px; font-size: .78rem; color: var(--text3); }
+
+    /* ══════════════════════════════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════════════════════════════ */
+    footer { border-top: 1px solid var(--border2); padding: 48px 0 28px; }
+    .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 40px; }
+    .footer-brand .logo { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .footer-brand p { font-size: .8rem; color: var(--text3); line-height: 1.7; max-width: 240px; }
+    .footer-col h4 { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); margin-bottom: 14px; }
+    .footer-col a { display: block; font-size: .82rem; color: var(--text2); margin-bottom: 8px; transition: color .15s; }
+    .footer-col a:hover { color: var(--gold); }
+    .footer-bottom { border-top: 1px solid var(--border2); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-size: .78rem; color: var(--text3); }
+
+    /* ── Floating WA ───────────────────────────────────────────── */
+    .float-wa {
+      position: fixed; bottom: 24px; right: 24px; z-index: 999;
+      width: 52px; height: 52px; border-radius: 50%; background: #25D366;
+      display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+      box-shadow: 0 4px 20px rgba(37,211,102,.4);
+      transition: transform .2s; animation: pulse-wa 2.5s infinite;
+    }
+    .float-wa:hover { transform: scale(1.1); }
+    @keyframes pulse-wa { 0%,100% { box-shadow: 0 4px 20px rgba(37,211,102,.35); } 50% { box-shadow: 0 4px 28px rgba(37,211,102,.6); } }
+
+    /* ── Responsive ────────────────────────────────────────────── */
+    @media (max-width: 880px) {
+      .demo-body { grid-template-columns: 1fr; }
+      .demo-terminal { display: none; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .testimonios-grid, .plans, .steps { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; gap: 24px; }
+      .nav-center { display: none; }
+      .step::after { display: none; }
+    }
+    @media (max-width: 580px) {
+      .features-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav id="nav">
+  <div class="container">
+    <div class="nav-row">
+      <a href="#" class="nav-logo"><span class="lobster">🛎️</span> HotelClaw <span class="version">v1.0</span></a>
+      <div class="nav-center">
+        <a href="#features">Funciones</a>
+        <a href="#como">Cómo funciona</a>
+        <a href="#pricing">Precios</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="nav-right">
+        <a href="#pricing" class="btn btn-ghost btn-sm" style="padding:8px 16px;font-size:.82rem">Ver planes</a>
+        <a href="#cta" class="btn btn-gold btn-sm" style="padding:8px 16px;font-size:.82rem">Empezar gratis</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div class="hero-eyebrow fade">
+        <span class="badge">🛎️ Construido sobre OpenClaw</span>
+      </div>
+      <h1 class="hero-title fade d1">El AI concierge que<br><span class="accent">realmente trabaja</span> para tu hotel.</h1>
+      <p class="hero-sub fade d2">
+        <strong>Aria</strong> atiende huéspedes 24/7 por WhatsApp y Telegram,
+        responde reseñas, crea contenido y gestiona quejas —
+        en español e inglés, sin intervención humana.
+      </p>
+      <div class="hero-cta fade d3">
+        <a href="#cta" class="btn btn-gold btn-lg">Empezar prueba gratuita →</a>
+        <a href="#demo-hero" class="btn btn-ghost btn-lg">Ver demo</a>
+      </div>
+      <div class="fade d3" style="margin-bottom:16px">
+        <div class="install-block">
+          <span class="install-prompt">$</span>
+          <span class="install-cmd">npm install -g <span class="cmd-gold">openclaw@latest</span></span>
+          <span class="install-copy" title="Copiar" onclick="copyInstall(this)">⎘</span>
+        </div>
+      </div>
+      <div class="social-proof fade d4">
+        <div class="avatars">
+          <div class="av">CM</div><div class="av">LR</div><div class="av">AP</div><div class="av">JB</div><div class="av">+</div>
+        </div>
+        <span class="social-text"><strong>+120 hoteles boutique</strong> ya usan Aria</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ DEMO ═══════════ -->
+<section id="demo-hero" style="padding-top:0;padding-bottom:80px">
+  <div class="container">
+    <div class="demo-window fade">
+      <div class="window-bar">
+        <div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div>
+        <span class="window-title">HotelClaw Dashboard — Hotel Casa del Mar</span>
+      </div>
+      <div class="demo-body">
+
+        <!-- Terminal left -->
+        <div class="demo-terminal">
+          <div class="t-line"><span class="t-ps1">$</span><span class="t-cmd"> openclaw --version</span></div>
+          <span class="t-out t-gold">🛎️ HotelClaw v1.0 — Powered by OpenClaw 2026.2.26</span>
+
+          <div class="t-line" style="margin-top:12px"><span class="t-ps1">$</span><span class="t-cmd"> openclaw channels status</span></div>
+          <span class="t-out">Checking channel status…</span>
+          <span class="t-out t-ok">✓ Gateway reachable</span>
+          <span class="t-out t-ok">✓ Telegram  · running  · mode:polling</span>
+          <span class="t-out t-ok">✓ WhatsApp  · linked   · 6 conversations</span>
+
+          <div class="t-line" style="margin-top:12px"><span class="t-ps1">$</span><span class="t-cmd"> openclaw skills list</span></div>
+          <span class="t-out t-ok">✓ hotel-responder-resenas</span>
+          <span class="t-out t-ok">✓ hotel-describir-habitaciones</span>
+          <span class="t-out t-ok">✓ hotel-email-bienvenida</span>
+          <span class="t-out t-ok">✓ hotel-redes-sociales</span>
+          <span class="t-out t-ok">✓ hotel-faq</span>
+          <span class="t-out t-ok">✓ hotel-quejas</span>
+          <span class="t-out t-dim" style="margin-top:4px">6 skills activas · 0 errores</span>
+
+          <div class="t-line" style="margin-top:12px"><span class="t-ps1">$</span><span class="t-cmd t-dim"> <span class="cursor"></span></span></div>
+        </div>
+
+        <!-- Chat right -->
+        <div class="demo-chat">
+          <div class="chat-hdr">
+            <div class="chat-av">🛎️</div>
+            <div class="chat-info">
+              <div class="name">Aria · Hotel Casa del Mar</div>
+              <div class="status">● En línea · responde en ~8s</div>
+            </div>
+          </div>
+
+          <div class="bubble-wrap right">
+            <div class="bubble guest">Hi! What time is check-in?</div>
+            <div class="btime" style="text-align:right">11:42 PM</div>
+          </div>
+          <div class="bubble-wrap">
+            <div class="bubble aria">Hello! 🛎️ Check-in is from <strong style="color:var(--gold)">3:00 PM</strong>. Early check-in available from $30 — just let me know your arrival time!</div>
+            <div class="btime">11:42 PM</div>
+          </div>
+
+          <div class="bubble-wrap right" style="margin-top:8px">
+            <div class="bubble guest">¿Tienen estacionamiento?</div>
+            <div class="btime" style="text-align:right">11:43 PM</div>
+          </div>
+          <div class="bubble-wrap">
+            <div class="bubble aria">¡Sí! 🚗 Contamos con estacionamiento <strong style="color:var(--gold)">gratuito</strong> dentro del hotel, sin reserva previa. ¿Necesita algo más antes de su llegada?</div>
+            <div class="btime">11:43 PM</div>
+          </div>
+
+          <div class="bubble-wrap right" style="margin-top:8px">
+            <div class="bubble guest">El cuarto de al lado hace mucho ruido 😤</div>
+            <div class="btime" style="text-align:right">1:04 AM</div>
+          </div>
+          <div class="bubble-wrap" id="typing-demo">
+            <div class="bubble aria"><div class="typing-dots"><span></span><span></span><span></span></div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FEATURES ═══════════ -->
+<section id="features">
+  <div class="container">
+    <div class="features-header fade">
+      <span class="badge" style="margin-bottom:10px">6 skills incluidas</span>
+      <h2 class="section-title">Todo lo que Aria hace<br>por tu hotel, desde el día 1.</h2>
+      <p class="section-sub" style="margin:12px auto 0">Cada skill está diseñada para resolver un problema real de la operación hotelera diaria.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card fade">
+        <div class="feature-icon">⭐</div>
+        <div class="feature-title">Responder Reseñas</div>
+        <div class="feature-text">Pegas una reseña de Google, Booking o TripAdvisor y Aria genera una respuesta profesional y empática lista para publicar.</div>
+        <span class="feature-pill"><span class="dot"></span>Google · Booking · TripAdvisor</span>
+      </div>
+      <div class="feature-card fade d1">
+        <div class="feature-icon">🛏️</div>
+        <div class="feature-title">Describir Habitaciones</div>
+        <div class="feature-text">Describes la habitación y Aria genera textos irresistibles para Booking.com, Airbnb y tu web en español e inglés.</div>
+        <span class="feature-pill"><span class="dot"></span>ES + EN automático</span>
+      </div>
+      <div class="feature-card fade d2">
+        <div class="feature-icon">✉️</div>
+        <div class="feature-title">Emails de Bienvenida</div>
+        <div class="feature-text">Emails personalizados según el tipo de visita: luna de miel, familia, negocios, aniversario. Listos para enviar.</div>
+        <span class="feature-pill"><span class="dot"></span>Pre-estadía · Check-in · Post-estadía</span>
+      </div>
+      <div class="feature-card fade d1">
+        <div class="feature-icon">📸</div>
+        <div class="feature-title">Contenido para Redes</div>
+        <div class="feature-text">Genera posts para Instagram y Facebook con tono elegante y aspiracional de hotel boutique de lujo.</div>
+        <span class="feature-pill"><span class="dot"></span>Instagram · Facebook</span>
+      </div>
+      <div class="feature-card fade d2">
+        <div class="feature-icon">💬</div>
+        <div class="feature-title">FAQ Automático 24/7</div>
+        <div class="feature-text">Cargas los datos de tu hotel una vez. Aria responde preguntas de huéspedes automáticamente a cualquier hora.</div>
+        <span class="feature-pill"><span class="dot"></span>WhatsApp · Telegram · 24/7</span>
+      </div>
+      <div class="feature-card fade d3">
+        <div class="feature-icon">🤝</div>
+        <div class="feature-title">Gestión de Quejas</div>
+        <div class="feature-text">Aria responde con empatía al huésped y genera un resumen de acción interna para tu staff simultáneamente.</div>
+        <span class="feature-pill"><span class="dot"></span>Respuesta + Alerta al staff</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CHANNELS ═══════════ -->
+<section id="channels">
+  <div class="container">
+    <div class="channels-header fade">
+      <span class="badge" style="margin-bottom:10px">Canales disponibles</span>
+      <h2 class="section-title">Aria está donde están tus huéspedes.</h2>
+      <p class="section-sub" style="margin:12px auto 0">Conéctala a los canales que ya usas. Sin cambiar los hábitos de tu equipo ni de tus huéspedes.</p>
+    </div>
+    <div class="channels-row fade d1">
+      <div class="channel-chip"><span class="ico">💬</span> WhatsApp</div>
+      <div class="channel-chip"><span class="ico">✈️</span> Telegram</div>
+      <div class="channel-chip"><span class="ico">🌐</span> Web Chat</div>
+      <div class="channel-chip"><span class="ico">📧</span> Email</div>
+      <div class="channel-chip"><span class="ico">💬</span> Slack (staff)</div>
+      <div class="channel-chip"><span class="ico">🔵</span> Facebook Messenger</div>
+      <div class="channel-chip"><span class="ico">📱</span> Instagram DM</div>
+    </div>
+    <div class="channels-row fade d2" style="justify-content:center">
+      <div class="channel-chip"><span class="ico">🏨</span> Cloudbeds PMS</div>
+      <div class="channel-chip"><span class="ico">🏨</span> Mews PMS</div>
+      <div class="channel-chip"><span class="ico">⭐</span> Google Business</div>
+      <div class="channel-chip"><span class="ico">🔵</span> Booking.com</div>
+      <div class="channel-chip"><span class="ico">🔺</span> Airbnb</div>
+    </div>
+    <p class="channels-note fade d3">Construido sobre <a href="https://github.com/openclaw/openclaw" style="color:var(--gold)">OpenClaw</a> · open-source · MIT License</p>
+  </div>
+</section>
+
+<!-- ═══════════ TESTIMONIOS ═══════════ -->
+<section id="testimonios">
+  <div class="container">
+    <div class="testimonios-header fade">
+      <span class="badge" style="margin-bottom:10px">Lo que dicen</span>
+      <h2 class="section-title">Hoteleros que ya usan Aria.</h2>
+    </div>
+    <div class="testimonios-grid">
+      <div class="tcard fade">
+        <p class="tcard-quote">Antes tardábamos horas en responder reseñas de Booking. Ahora Aria genera la respuesta en 10 segundos. Subimos de 8.1 a 8.7 en el ranking en dos meses."</p>
+        <div class="tcard-author">
+          <div class="tcard-av">CM</div>
+          <div>
+            <div class="tcard-name">Carmen Martínez</div>
+            <div class="tcard-hotel">Hotel Hacienda Roja · Oaxaca</div>
+            <div class="tcard-stars">★★★★★</div>
+          </div>
+        </div>
+      </div>
+      <div class="tcard fade d1">
+        <p class="tcard-quote">Los turistas europeos siempre nos escribían en inglés y era un problema. Aria detecta el idioma sola y responde perfecto. Ya no perdemos reservas por la barrera del idioma."</p>
+        <div class="tcard-author">
+          <div class="tcard-av">LR</div>
+          <div>
+            <div class="tcard-name">Luis Ramos</div>
+            <div class="tcard-hotel">Boutique Casa Colonial · Cartagena</div>
+            <div class="tcard-stars">★★★★★</div>
+          </div>
+        </div>
+      </div>
+      <div class="tcard fade d2">
+        <p class="tcard-quote">Una huésped se quejó a las 2 AM que el cuarto estaba frío. Aria respondió con empatía, notificó al staff, y al día siguiente la huésped dejó 5 estrellas en Google."</p>
+        <div class="tcard-author">
+          <div class="tcard-av">AP</div>
+          <div>
+            <div class="tcard-name">Andrea Paz</div>
+            <div class="tcard-hotel">Hotel El Refugio · San Cristóbal</div>
+            <div class="tcard-stars">★★★★★</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CÓMO ═══════════ -->
+<section id="como">
+  <div class="container">
+    <div class="como-header fade">
+      <span class="badge" style="margin-bottom:10px">Onboarding</span>
+      <h2 class="section-title">En línea en menos de un día.</h2>
+      <p class="section-sub" style="margin:12px auto 0">Sin programadores. Sin configuraciones complejas. Solo un panel web donde llenas los datos de tu hotel.</p>
+    </div>
+    <div class="steps">
+      <div class="step fade">
+        <div class="step-num">Paso 01</div>
+        <div class="step-title">Instala HotelClaw</div>
+        <div class="step-text">Un comando en tu servidor o VPS y OpenClaw queda instalado. El panel web de administración arranca automáticamente.</div>
+        <div class="step-code"><span class="hl">npm</span> install -g openclaw@latest</div>
+      </div>
+      <div class="step fade d1">
+        <div class="step-num">Paso 02</div>
+        <div class="step-title">Configura tu hotel</div>
+        <div class="step-text">Llenas un formulario en el panel web: horarios, WiFi, políticas, servicios. Aria aprende todo y empieza a responder huéspedes al instante.</div>
+        <div class="step-code">http://localhost:<span class="hl">3000</span> → Mi Hotel</div>
+      </div>
+      <div class="step fade d2">
+        <div class="step-num">Paso 03</div>
+        <div class="step-title">Conecta los canales</div>
+        <div class="step-text">Vinculas WhatsApp escaneando un QR y/o creas un bot de Telegram. El panel te guía paso a paso. Aria activa en minutos.</div>
+        <div class="step-code">Panel → Canales → <span class="hl">Conectar</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ PRICING ═══════════ -->
+<section id="pricing">
+  <div class="container">
+    <div class="pricing-header fade">
+      <span class="badge" style="margin-bottom:10px">Precios</span>
+      <h2 class="section-title">Un plan para cada hotel.</h2>
+      <p class="section-sub" style="margin:12px auto 0">Sin contratos. Sin costos ocultos. Cancela cuando quieras. 14 días gratis en todos los planes.</p>
+    </div>
+    <div class="pricing-toggle fade">
+      <span>Mensual</span>
+      <button class="toggle" id="ptoggle" onclick="flipBilling()"><div class="knob"></div></button>
+      <span>Anual <span class="save-pill">20% off</span></span>
+    </div>
+    <div class="plans">
+
+      <div class="plan fade">
+        <div class="plan-name">Esencial</div>
+        <div class="plan-price"><span class="sym">$</span><span class="num" data-m="97" data-a="77">97</span><span class="per">/mes</span></div>
+        <div class="plan-desc">Para hoteles que quieren empezar con Aria en Telegram.</div>
+        <ul class="plan-list">
+          <li><span class="y">✓</span><span class="txt">Aria por Telegram</span></li>
+          <li><span class="y">✓</span><span class="txt">FAQ automático 24/7</span></li>
+          <li><span class="y">✓</span><span class="txt">Responder reseñas</span></li>
+          <li><span class="y">✓</span><span class="txt">Gestión de quejas</span></li>
+          <li><span class="y">✓</span><span class="txt">Panel web de administración</span></li>
+          <li><span class="y">✓</span><span class="txt">Hasta 1,000 mensajes/mes</span></li>
+          <li><span class="n">✗</span><span class="txt dim">WhatsApp</span></li>
+          <li><span class="n">✗</span><span class="txt dim">Emails automáticos</span></li>
+        </ul>
+        <a href="#cta" class="btn btn-ghost" style="width:100%;justify-content:center">Empezar gratis 14 días</a>
+      </div>
+
+      <div class="plan popular fade d1">
+        <div class="plan-top-badge">⭐ Más popular</div>
+        <div class="plan-name">Boutique</div>
+        <div class="plan-price"><span class="sym">$</span><span class="num" data-m="247" data-a="197">247</span><span class="per">/mes</span></div>
+        <div class="plan-desc">El paquete completo para maximizar la experiencia del huésped.</div>
+        <ul class="plan-list">
+          <li><span class="y">✓</span><span class="txt">Aria por WhatsApp + Telegram</span></li>
+          <li><span class="y">✓</span><span class="txt">Las 6 skills completas</span></li>
+          <li><span class="y">✓</span><span class="txt">Emails automáticos pre/post estadía</span></li>
+          <li><span class="y">✓</span><span class="txt">Contenido para redes sociales</span></li>
+          <li><span class="y">✓</span><span class="txt">Panel web de administración</span></li>
+          <li><span class="y">✓</span><span class="txt">Mensajes ilimitados</span></li>
+          <li><span class="y">✓</span><span class="txt">Soporte prioritario</span></li>
+          <li><span class="y">✓</span><span class="txt">Onboarding guiado (1h)</span></li>
+        </ul>
+        <a href="#cta" class="btn btn-gold" style="width:100%;justify-content:center">Empezar gratis 14 días</a>
+      </div>
+
+      <div class="plan fade d2">
+        <div class="plan-name">Elite</div>
+        <div class="plan-price"><span class="sym">$</span><span class="num" data-m="497" data-a="397">497</span><span class="per">/mes</span></div>
+        <div class="plan-desc">Para cadenas y hoteles con integración total en su sistema de reservas.</div>
+        <ul class="plan-list">
+          <li><span class="y">✓</span><span class="txt">Todo lo del plan Boutique</span></li>
+          <li><span class="y">✓</span><span class="txt">Integración PMS (Cloudbeds / Mews)</span></li>
+          <li><span class="y">✓</span><span class="txt">Respuesta automática Google Reviews</span></li>
+          <li><span class="y">✓</span><span class="txt">WhatsApp Business API oficial</span></li>
+          <li><span class="y">✓</span><span class="txt">Dashboard de métricas</span></li>
+          <li><span class="y">✓</span><span class="txt">Aria en web chat del hotel</span></li>
+          <li><span class="y">✓</span><span class="txt">Hasta 3 propiedades</span></li>
+          <li><span class="y">✓</span><span class="txt">Soporte 24/7 por WhatsApp</span></li>
+        </ul>
+        <a href="#cta" class="btn btn-ghost" style="width:100%;justify-content:center">Contactar para demo</a>
+      </div>
+
+    </div>
+    <p style="text-align:center;margin-top:28px;font-size:.8rem;color:var(--text3)" class="fade">
+      🔒 Garantía de devolución de 30 días · Self-hosted (tus datos nunca salen de tu servidor) · Open-source core
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════ FAQ ═══════════ -->
+<section id="faq">
+  <div class="container-sm">
+    <div class="faq-header fade">
+      <span class="badge" style="margin-bottom:10px">FAQ</span>
+      <h2 class="section-title">Preguntas frecuentes.</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-btn" onclick="faq(this)">¿Necesito conocimientos técnicos para instalar Aria? <span class="faq-arrow">+</span></button>
+        <div class="faq-body">No. HotelClaw incluye un panel de administración web donde configuras todo con formularios simples. Para la instalación inicial, nuestro equipo te acompaña en una sesión de onboarding de 1 hora.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" onclick="faq(this)">¿Los huéspedes saben que hablan con una IA? <span class="faq-arrow">+</span></button>
+        <div class="faq-body">Aria se presenta como "Aria, concierge virtual del hotel". Su tono es tan natural que la mayoría no nota la diferencia. Si alguien pregunta directamente, Aria lo confirma honestamente.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" onclick="faq(this)">¿Qué pasa si Aria no sabe responder algo? <span class="faq-arrow">+</span></button>
+        <div class="faq-body">Aria dice "Permítame verificar eso con nuestro equipo" y envía una alerta interna a tu staff. Nunca inventa información.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" onclick="faq(this)">¿Mis datos están seguros? ¿Dónde se guardan? <span class="faq-arrow">+</span></button>
+        <div class="faq-body">HotelClaw corre en tu propio servidor o VPS. Los datos de tus huéspedes nunca salen de tu infraestructura. El core es open-source y auditable — nada oculto.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" onclick="faq(this)">¿Puedo cancelar en cualquier momento? <span class="faq-arrow">+</span></button>
+        <div class="faq-body">Sí. Sin penalizaciones. Al cancelar, Aria se detiene al final del período facturado y todos tus datos y configuraciones son tuyos.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" onclick="faq(this)">¿Funciona con cualquier sistema de reservas (PMS)? <span class="faq-arrow">+</span></button>
+        <div class="faq-body">El plan Elite incluye integración nativa con Cloudbeds y Mews. Para otros PMS, ofrecemos integración vía API — contáctanos para evaluar tu caso.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CTA FINAL ═══════════ -->
+<section id="cta">
+  <div class="container">
+    <div class="cta-glow fade">
+      <div class="badge-green" style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(63,185,80,.1);color:var(--green);border:1px solid rgba(63,185,80,.25);margin-bottom:18px">✓ 14 días gratis · sin tarjeta de crédito</div>
+      <h2>Tu hotel merece un concierge<br>que nunca se va a casa.</h2>
+      <p style="margin:14px auto 32px;max-width:480px">Empieza gratis. Aria lista en menos de un día. Sin contratos, sin técnicos, sin complicaciones.</p>
+      <div class="cta-btns">
+        <a href="mailto:hola@hotelclaw.ai?subject=Quiero empezar con HotelClaw" class="btn btn-gold btn-lg">Empezar prueba gratuita →</a>
+        <a href="https://wa.me/1234567890?text=Hola,%20quiero%20ver%20un%20demo%20de%20HotelClaw" target="_blank" class="btn btn-ghost btn-lg">💬 Hablar por WhatsApp</a>
+      </div>
+      <p class="cta-sub">🔒 Self-hosted · Open-source core · Soporte en español · Garantía 30 días</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo">🛎️ HotelClaw</div>
+        <p>El AI concierge para hoteles boutique. Construido sobre <a href="https://github.com/openclaw/openclaw" style="color:var(--gold)">OpenClaw</a>, open-source.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Producto</h4>
+        <a href="#features">Funciones</a>
+        <a href="#pricing">Precios</a>
+        <a href="#como">Cómo funciona</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="footer-col">
+        <h4>Contacto</h4>
+        <a href="mailto:hola@hotelclaw.ai">hola@hotelclaw.ai</a>
+        <a href="https://wa.me/1234567890" target="_blank">WhatsApp</a>
+        <a href="https://github.com/openclaw/openclaw" target="_blank">GitHub</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 HotelClaw. MIT License.</span>
+      <span>Powered by <a href="https://openclaw.ai" style="color:var(--gold)">OpenClaw</a> 🦞</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Float WA -->
+<a class="float-wa" href="https://wa.me/1234567890?text=Hola,%20quiero%20saber%20m%C3%A1s%20sobre%20HotelClaw" target="_blank">💬</a>
+
+<!-- ═══════════ JS ═══════════ -->
+<script>
+  // Nav solid on scroll
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => nav.classList.toggle('solid', scrollY > 50), { passive: true });
+
+  // Fade-in on scroll
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); }), { threshold: 0.1 });
+  document.querySelectorAll('.fade').forEach(el => io.observe(el));
+
+  // Typing animation → reply
+  setTimeout(() => {
+    const el = document.getElementById('typing-demo');
+    if (!el) return;
+    setTimeout(() => {
+      el.querySelector('.bubble').innerHTML = 'Lamento mucho eso 🙏 Nuestro equipo de turno ya fue notificado y estará en su habitación en menos de 10 minutos. ¿Desea que le cambiemos de habitación mientras tanto?';
+    }, 2200);
+  }, 3500);
+
+  // Pricing toggle
+  let annual = false;
+  function flipBilling() {
+    annual = !annual;
+    document.getElementById('ptoggle').classList.toggle('on', annual);
+    document.querySelectorAll('.num').forEach(el => { if (el.dataset.m) el.textContent = annual ? el.dataset.a : el.dataset.m; });
+  }
+
+  // FAQ
+  function faq(btn) {
+    const item = btn.closest('.faq-item');
+    const open = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!open) item.classList.add('open');
+  }
+
+  // Copy install cmd
+  function copyInstall(btn) {
+    navigator.clipboard?.writeText('npm install -g openclaw@latest');
+    btn.textContent = '✓';
+    setTimeout(() => btn.textContent = '⎘', 1800);
+  }
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const t = document.querySelector(a.getAttribute('href'));
+      if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+</script>
+
+</body>
+</html>
